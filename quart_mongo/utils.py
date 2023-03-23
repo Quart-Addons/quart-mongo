@@ -1,9 +1,13 @@
 """
 quart_mongo.utils
 """
-from typing import Any, Dict, Optional, Tuple
+from functools import wraps
+from typing import Any, Callable, Dict, Optional, Tuple
+
+from humps import camelize
+from odmantic import Model
 from pydantic import BaseModel
-from quart import Quart
+from quart import Quart, current_app, Response, ResponseReturnValue
 
 from .const import MONGO_URI_ERROR
 
@@ -50,3 +54,31 @@ class MongoConfig(BaseModel):
     database: Optional[str]
     args: Optional[Tuple[Any]]
     kwargs: Optional[Dict[str, Any]]
+
+def convert_odm_model_result(func: Callable) -> Callable:
+    """
+    Converts `odmantic.Model` to a dictionary to be used in a response.
+    """
+    @wraps(func)
+    async def decorator(result: ResponseReturnValue) -> Response:
+        status_or_headers = None
+        headers = None
+
+        if isinstance(result, tuple):
+            value, status_or_headers, headers = result + (None,) * (3 - len(result))
+        else:
+            value = result
+
+        was_model = False
+
+        if isinstance(value, Model):
+            dict_or_value = value.dict(by_alias=current_app.config["QUART_MONGO_BY_ALIAS"])
+            was_model = True
+        else:
+            dict_or_value = value
+
+        if was_model and current_app.config["QUART_MONGO_CONVERT_CASING"]:
+            dict_or_value = camelize(dict_or_value)
+
+        return await func((dict_or_value, status_or_headers, headers))
+    return decorator
