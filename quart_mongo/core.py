@@ -11,7 +11,7 @@ from quart import Quart, abort, current_app, request, Response
 
 from .bson import BSONObjectIdConverter
 from .json import MongoJSONProvider
-from .utils import get_uri, MongoConfig
+from .utils import get_uri, MongoConfig, convert_odm_model_result
 from .wrappers import AIOMotorClient, AIOMotorDatabase, AIOEngine
 
 class Mongo(object):
@@ -93,6 +93,9 @@ class Mongo(object):
         if app.config.setdefault("MONGO_JSON_PROVIDER", True) and \
             not isinstance(app.json, MongoJSONProvider):
             app.json = MongoJSONProvider(app, self.json_options)
+
+        # Custom Response
+        app.make_response= convert_odm_model_result(app.make_response)
 
     async def _before_serving(self) -> None:
         """
