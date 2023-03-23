@@ -1,11 +1,10 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.241.1/containers/python-3
 {
-	"name": "Python 3",
-	"build": {
-		"dockerfile": "Dockerfile",
-		"context": ".."
-	},
+	"name": "Quart-Mongo",
+	"dockerComposeFile": "docker-compose.yml",
+	"service": "app",
+	"workspaceFolder": "/workspace",
 
 	// Configure tool-specific properties.
 	"customizations": {
@@ -31,11 +30,12 @@
 			"extensions": [
 				"ms-python.python",
 				"ms-python.vscode-pylance",
+				"mongodb.mongodb-vscode",
 				"tht13.html-preview-vscode"
 			]
 		}
 	},
-
-	"postCreateCommand": "bash ./.devcontainer/postCreateCommand.sh", 
+	"postCreateCommand": "bash ./.devcontainer/postCreateCommand.sh",
+	"shutdownAction": "stopCompose",
 	"remoteUser": "root"
 }
