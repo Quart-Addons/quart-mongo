@@ -18,7 +18,7 @@ async def test_motor_database_success(
     mongo = mongo_uri
     await app.startup()
     assert isinstance(mongo.db, AIOMotorDatabase)
-    await teardown(Mongo)
+    await teardown(mongo)
 
 @pytest.mark.asyncio
 async def test_multiple_motor_connections(
