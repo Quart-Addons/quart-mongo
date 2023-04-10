@@ -6,10 +6,13 @@ The extension for Quart Mongo.
 from __future__ import annotations
 import typing as t
 
+from bson.json_util import JSONOptions
 from pymongo import uri_parser
 from quart import Quart, abort, current_app, request
 
+from .bson import BSONObjectIdConverter
 from .config import MongoConfig, _get_uri
+from .json import MongoJSONProvider
 from .wrappers import AIOMotorClient, AIOMotorDatabase, AIOEngine
 
 class Mongo(object):
@@ -22,6 +25,7 @@ class Mongo(object):
             self,
             app: Quart | None = None,
             uri: str | None = None,
+            json_options: JSONOptions | None = None,
             *args,
             **kwargs
             ) -> None:
@@ -32,14 +36,15 @@ class Mongo(object):
             app: The `Quart` application to use. Defaults to ``None``.
             uri: The MongoDB URI to use. This parameter defaults to ``None``
             and will then use the app config.
+            json_options: Options for JSON encoding.
             args: Arguments to pass to `AIOMotorClient` on intialization.
             kwargs: Extra agrugments to pass to `AIOMotorClient` on intialization.
         """
         self.config: MongoConfig = None
+        self.json_options: JSONOptions | None = json_options
         self.cx: AIOMotorClient = None
         self.db: AIOMotorDatabase = None
         self.odm: AIOEngine = None
-
         if app is not None:
             self.init_app(app, uri, *args, **kwargs)
 
@@ -80,6 +85,17 @@ class Mongo(object):
 
         # Register before serving function with the app
         app.before_serving(self._before_serving)
+
+        # Register BSON converter
+        if app.config.setdefault("MONGO_BSON_CONVERTER", True) and \
+            "ObjectId" not in app.url_map.converters:
+            app.url_map.converters["ObjectId"] = BSONObjectIdConverter
+
+        # Register JSON Provider
+        if app.config.setdefault("MONGO_JSON_PROVIDER", True) and \
+            not isinstance(app.json, MongoJSONProvider):
+            app.json_provider_class = MongoJSONProvider
+            app.json = app.json_provider_class(app)
 
     async def _before_serving(self) -> None:
         """
