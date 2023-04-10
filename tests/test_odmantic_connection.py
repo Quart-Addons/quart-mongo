@@ -65,3 +65,21 @@ async def test_multiple_odmantic_db_connections(
     assert isinstance(db2.odm, AIOEngine)
     await teardown(db1)
     await teardown(db2)
+
+@pytest.mark.asyncio
+async def test_odmantic_model(
+    app: Quart, mongo_uri: Mongo
+    ) -> None:
+    """
+    Test Odmantic models.
+    """
+    mongo = mongo_uri
+    await app.startup()
+    thing = await mongo.odm.find_one(Things)
+    assert thing is None
+
+    thing = Things(id="thing", val="foo")
+    await mongo.odm.save(thing)
+    thing = await mongo.odm.find_one(Things)
+    assert isinstance(thing, Things)
+    await teardown(mongo)
