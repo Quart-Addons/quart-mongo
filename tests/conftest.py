@@ -4,6 +4,7 @@ Pytest Configuration.
 import pytest
 
 from quart import Quart
+from quart.typing import TestClientProtocol
 from quart_mongo import Mongo
 
 @pytest.fixture
@@ -14,6 +15,13 @@ def app() -> Quart:
     """
     app = Quart(__name__)
     return app
+
+@pytest.fixture
+def client(app: Quart) -> TestClientProtocol:
+    """
+    Returns a Quart test client.
+    """
+    return app.test_client()
 
 @pytest.fixture
 def uri() -> str:
