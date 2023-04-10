@@ -5,15 +5,30 @@ The extension for Quart Mongo.
 """
 from __future__ import annotations
 import typing as t
+from mimetypes import guess_type
 
+from bson import ObjectId
 from bson.json_util import JSONOptions
+from gridfs import NoFile
+from motor.motor_asyncio import AsyncIOMotorGridFSBucket
 from pymongo import uri_parser
-from quart import Quart, abort, current_app, request
-
+from quart import Quart, abort, current_app, request, Response, send_file
+from werkzeug.wsgi import wrap_file
 from .bson import BSONObjectIdConverter
+
+from .const import (
+    GRIDFS_CACHE,
+    GRIDFS_FILEOBJ,
+    GRIDFS_STRING,
+    GRIDFS_VERSION
+)
+
 from .config import MongoConfig, _get_uri
 from .json import MongoJSONProvider
 from .wrappers import AIOMotorClient, AIOMotorDatabase, AIOEngine
+
+if t.TYPE_CHECKING:
+    from _typeshed import SupportsRead
 
 class Mongo(object):
     """
@@ -114,3 +129,72 @@ class Mongo(object):
         if self.config.database:
             self.db = self.cx.motor(self.config.database)
             self.odm = self.cx.odm(self.config.database)
+
+    async def send_file(
+        self,
+        filename: str,
+        base: str = "fs",
+        version: int = -1,
+        cache_for: int = 31536000
+        ) -> Response:
+        """
+        Respond with a file from GridFS.
+        """
+        if not isinstance(base, str):
+            raise TypeError(GRIDFS_STRING)
+        if not isinstance(version, int):
+            raise TypeError(GRIDFS_VERSION)
+        if not isinstance(cache_for, int):
+            raise TypeError(GRIDFS_CACHE)
+
+        storage = AsyncIOMotorGridFSBucket(self.db, bucket_name = base)
+
+        try:
+            fileobj = await storage.open_download_stream_by_name(
+                filename, revision = version
+            )
+        except NoFile:
+            abort(404)
+
+        data = wrap_file(request, fileobj, buffer_size=1024 * 255)
+        response = current_app.response_class(
+            data, mimetype = fileobj.content_type
+            )
+        response.content_length = fileobj.length
+        response.last_modified = fileobj.upload_date
+        response.set_etag(fileobj.md5)
+        response.cache_control.max_age = cache_for
+        response.cache_control.public = True
+        response.make_conditional(request)
+        return response
+
+    async def save_file(
+        self,
+        filename: str,
+        fileobj: SupportsRead[t.AnyStr],
+        base: str = "fs",
+        content_type: str | None = None,
+        **kwargs
+        ) -> ObjectId:
+        """
+        Save a file like object to GridFS using the given filename.
+        """
+        if not isinstance(base, str):
+            raise TypeError(GRIDFS_STRING)
+        if not (hasattr(fileobj, "read") and callable(fileobj.read)):
+            raise TypeError(GRIDFS_FILEOBJ)
+
+        if content_type is None:
+            content_type = guess_type(filename)[0]
+
+        kwargs["contentType"] = content_type
+
+        storage = AsyncIOMotorGridFSBucket(self.db, bucket_name = base)
+
+        id = await storage.upload_from_stream(
+            filename,
+            fileobj,
+            metadata = kwargs
+        )
+
+        return id
