@@ -1,0 +1,3 @@
+"""
+Quart Mongo Tests.
+"""
