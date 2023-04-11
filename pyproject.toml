@@ -13,6 +13,8 @@ quart = "^0.18.3"
 odmantic = "^0.9.2"
 motor = "^3.1.1"
 pymongo = "^4.3.3"
+pyhumps = "^3.8.0"
+pydantic = "^1.10.7"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.2.2"
