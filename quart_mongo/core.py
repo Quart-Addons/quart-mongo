@@ -27,7 +27,7 @@ from .config import MongoConfig, _get_uri
 from .json import MongoJSONProvider
 from .wrappers import AIOMotorClient, AIOMotorDatabase, AIOEngine
 
-from .odm_models import convert_model_result
+from .response import convert_model_result
 
 if t.TYPE_CHECKING:
     from _typeshed import SupportsRead
