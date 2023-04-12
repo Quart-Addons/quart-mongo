@@ -27,6 +27,8 @@ from .config import MongoConfig, _get_uri
 from .json import MongoJSONProvider
 from .wrappers import AIOMotorClient, AIOMotorDatabase, AIOEngine
 
+from .odm_models import convert_model_result
+
 if t.TYPE_CHECKING:
     from _typeshed import SupportsRead
 
@@ -111,6 +113,11 @@ class Mongo(object):
             not isinstance(app.json, MongoJSONProvider):
             app.json_provider_class = MongoJSONProvider
             app.json = app.json_provider_class(app)
+
+        # Resgister Odmantic Models Helpers
+        # test client class here
+        # websocket mixin here
+        app.make_response = convert_model_result(app.make_response)
 
     async def _before_serving(self) -> None:
         """
