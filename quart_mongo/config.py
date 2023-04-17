@@ -4,7 +4,7 @@ quart_mongo.config
 Provides helper classes and functions for configuring
 MongoDB with Quart-Mongo.
 """
-import typing as t
+from typing import Any, Dict, Optional, Tuple
 
 from pydantic import BaseModel
 from quart import Quart
@@ -23,12 +23,12 @@ class MongoConfig(BaseModel):
         args: arguments to pass to `AIOMotorClient`.
         kwargs: extra arguments to pass to `AIOMotorClient`.
     """
-    uri: t.Optional[str]
-    database: t.Optional[str]
-    args: t.Optional[t.Tuple[t.Any]]
-    kwargs: t.Optional[t.Dict[str, t.Any]]
+    uri: Optional[str]
+    database: Optional[str]
+    args: Optional[Tuple[Any]]
+    kwargs: Optional[Dict[str, Any]]
 
-def _get_uri(app: Quart, uri: t.Optional[str]) -> str:
+def _get_uri(app: Quart, uri: Optional[str]) -> str:
     """
     Gets the MongoDB URI from the app configuration.
 
