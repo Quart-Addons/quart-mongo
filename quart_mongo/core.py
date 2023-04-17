@@ -5,6 +5,7 @@ The extension for Quart Mongo.
 """
 from __future__ import annotations
 import typing as t
+from types import new_class
 from mimetypes import guess_type
 
 from bson import ObjectId
@@ -14,6 +15,7 @@ from motor.motor_asyncio import AsyncIOMotorGridFSBucket
 from pymongo import uri_parser
 from quart import Quart, abort, current_app, request, Response, send_file
 from werkzeug.wsgi import wrap_file
+
 from .bson import BSONObjectIdConverter
 
 from .const import (
@@ -25,6 +27,7 @@ from .const import (
 
 from .config import MongoConfig, _get_uri
 from .json import MongoJSONProvider
+from .mixins import WebsocketMixin
 from .wrappers import AIOMotorClient, AIOMotorDatabase, AIOEngine
 
 from .response import convert_model_result
@@ -116,7 +119,7 @@ class Mongo(object):
 
         # Resgister Odmantic Models Helpers
         # test client class here
-        # websocket mixin here
+        app.websocket_class = new_class("Websocket", (WebsocketMixin, app.websocket_class))
         app.make_response = convert_model_result(app.make_response)
 
     async def _before_serving(self) -> None:
