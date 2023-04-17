@@ -4,7 +4,7 @@ quart_mongo.core
 The extension for Quart Mongo.
 """
 from __future__ import annotations
-import typing as t
+from typing import AnyStr, Optional, TYPE_CHECKING
 from types import new_class
 from mimetypes import guess_type
 
@@ -27,12 +27,12 @@ from .const import (
 
 from .config import MongoConfig, _get_uri
 from .json import MongoJSONProvider
-from .mixins import WebsocketMixin
+from .mixins import WebsocketMixin, TestClientMixin
 from .wrappers import AIOMotorClient, AIOMotorDatabase, AIOEngine
 
 from .response import convert_model_result
 
-if t.TYPE_CHECKING:
+if TYPE_CHECKING:
     from _typeshed import SupportsRead
 
 class Mongo(object):
@@ -43,9 +43,9 @@ class Mongo(object):
     """
     def __init__(
             self,
-            app: Quart | None = None,
-            uri: str | None = None,
-            json_options: JSONOptions | None = None,
+            app: Optional[Quart] = None,
+            uri: Optional[str] = None,
+            json_options: Optional[JSONOptions] = None,
             *args,
             **kwargs
             ) -> None:
@@ -61,7 +61,7 @@ class Mongo(object):
             kwargs: Extra agrugments to pass to `AIOMotorClient` on intialization.
         """
         self.config: MongoConfig = None
-        self.json_options: JSONOptions | None = json_options
+        self.json_options: Optional[JSONOptions] = json_options
         self.cx: AIOMotorClient = None
         self.db: AIOMotorDatabase = None
         self.odm: AIOEngine = None
@@ -118,7 +118,7 @@ class Mongo(object):
             app.json = app.json_provider_class(app)
 
         # Resgister Odmantic Models Helpers
-        # test client class here
+        app.test_client_class = new_class("TestClient", (TestClientMixin, app.test_app_class))
         app.websocket_class = new_class("Websocket", (WebsocketMixin, app.websocket_class))
         app.make_response = convert_model_result(app.make_response)
 
@@ -181,7 +181,7 @@ class Mongo(object):
     async def save_file(
         self,
         filename: str,
-        fileobj: SupportsRead[t.AnyStr],
+        fileobj: SupportsRead[AnyStr],
         base: str = "fs",
         content_type: str | None = None,
         **kwargs
