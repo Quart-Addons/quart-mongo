@@ -67,5 +67,6 @@ class TestClientProtocol(Protocol):
     ) -> Response:
         ...
 
+ODM = t.TypeVar("ODM", bound=ODM_Model)
 BM = t.TypeVar("BM", bound=BaseModel)
 DC = t.TypeVar("DC", bound="Dataclass")
