@@ -6,7 +6,7 @@ from __future__ import annotations
 from dataclasses import asdict, is_dataclass
 from enum import auto, Enum
 from functools import wraps
-import typing as t
+from typing import Any, Callable, cast, Dict, Optional, Tuple, Type, TypeVar, Union
 
 from humps import decamelize
 from odmantic import Model as ODM_Model
@@ -32,7 +32,7 @@ class ResponseSchemaValidationError(Exception):
     """
     Reponse Schema Validation Error
     """
-    def __init__(self, validation_error: t.Optional[ValidationError] = None) -> None:
+    def __init__(self, validation_error: Optional[ValidationError] = None) -> None:
         self.validation_error = validation_error
 
 class ResponseHeadersValidationError(ResponseSchemaValidationError):
@@ -56,7 +56,7 @@ def mongo_validate_request(
         model_class: ODM_Model,
         *,
         source: DataSource = DataSource.JSON
-) -> t.Callable:
+) -> Callable:
     """
     Validate the request data.
 
@@ -78,11 +78,11 @@ def mongo_validate_request(
     ):
         raise SchemaInvalidError("Form must not have nested objects.")
 
-    def decorator(func: t.Callable) -> t.Callable:
+    def decorator(func: Callable) -> Callable:
         setattr(func, QUART_MONGO_REQUEST_ATTRIBUTE, (model_class, source))
 
         @wraps(func)
-        async def wrapper(*args: t.Any, **kwargs: t.Any) -> t.Any:
+        async def wrapper(*args: Any, **kwargs: Any) -> Any:
             if source == DataSource.JSON:
                 data = await request.get_json()
             else:
@@ -105,8 +105,8 @@ def mongo_validate_request(
 def mongo_validate_response(
         model_class: ODM_Model,
         status_code: int = 200,
-        header_model_class: t.Optional[Model] = None
-) -> t.Callable:
+        header_model_class: Optional[Model] = None
+) -> Callable:
     """
     Validate the response data.
 
@@ -126,14 +126,14 @@ def mongo_validate_response(
     headers_model_class = _to_pydantic_model(header_model_class)
 
     def decorator(
-            func: t.Callable[..., ResponseReturnValue]
-    ) -> t.Callable[..., QuartResponseReturnValue]:
+            func: Callable[..., ResponseReturnValue]
+    ) -> Callable[..., QuartResponseReturnValue]:
         schemas = getattr(func, QUART_MONGO_RESPONSE_ATTRIBUTE, {})
         schemas[status_code] = (model_class, headers_model_class)
         setattr(func, QUART_MONGO_RESPONSE_ATTRIBUTE, schemas)
 
         @wraps(func)
-        async def wrapper(*args: t.Any, **kwargs: t.Any) -> t.Any:
+        async def wrapper(*args: Any, **kwargs: Any) -> Any:
             result = await current_app.ensure_async(func)(*args, **kwargs)
 
             status_or_headers = None
@@ -178,7 +178,7 @@ def mongo_validate_response(
                     if is_dataclass(headers_model_value):
                         headers_value = asdict(headers_model_value)
                     else:
-                        headers_value = t.cast(BaseModel, headers_model_value).dict()
+                        headers_value = cast(BaseModel, headers_model_value).dict()
                 else:
                     headers_value = headers
 
@@ -192,10 +192,10 @@ def mongo_validate_response(
 
 def mongo_validate(
         *,
-        request: t.Optional[ODM_Model] = None,
+        request: Optional[ODM_Model] = None,
         request_source: DataSource = DataSource.JSON,
-        responses: t.Dict[int, t.Tuple[ODM_Model, t.Optional[Model]]]
-) -> t.Callable:
+        responses: Dict[int, Tuple[ODM_Model, Optional[Model]]]
+) -> Callable:
     """
     Validate the route.
 
@@ -203,7 +203,7 @@ def mongo_validate(
     and mongo_validate_response decorators. Please see the docstrings
     for those decorators for more information.
     """
-    def decorator(func: t.Callable) -> t.Callable:
+    def decorator(func: Callable) -> Callable:
         if request is not None:
             func = mongo_validate_request(request, source=request_source)(func)
         for status, models in responses.items():
@@ -212,11 +212,11 @@ def mongo_validate(
 
     return decorator
 
-T = t.TypeVar("T")
+T = TypeVar("T")
 
 def _convert_headers(
-        headers: t.Union[dict, Headers],
-        model_class: t.Type[T]
+        headers: Union[dict, Headers],
+        model_class: Type[T]
         ) -> T:
     """
     Converts headers.
@@ -241,5 +241,5 @@ def _to_pydantic_model(model_class: Model) -> PydanticModel:
     if is_dataclass(model_class):
         pydantic_model_class = pydantic_dataclass(model_class)
     else:
-        pydantic_model_class = t.cast(PydanticModel, model_class)
+        pydantic_model_class = cast(PydanticModel, model_class)
     return pydantic_model_class

@@ -3,7 +3,7 @@ quart_mongo.json
 
 Provides JSON Provider for MongoDB.
 """
-import typing as t
+from typing import Any
 
 from bson import json_util, SON
 from bson.json_util import DEFAULT_JSON_OPTIONS, JSONOptions
@@ -29,7 +29,7 @@ class MongoJSONProvider(DefaultJSONProvider):
 
         super(DefaultJSONProvider, self).__init__(app)
 
-    def default(self, object_: t.Any) -> t.Any:
+    def default(self, object_: Any) -> Any:
         """
         Serialize MongoDB object types using :mod:`bson.json_util`.
 

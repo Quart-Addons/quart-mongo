@@ -1,14 +1,14 @@
 """
 quart_mongo.odm_models.response
 """
-import typing as t
 from functools import wraps
+from typing import Callable
 
 from humps import decamelize
 from odmantic import Model
 from quart import current_app, Response, ResponseReturnValue
 
-def convert_model_result(func: t.Callable) -> t.Callable:
+def convert_model_result(func: Callable) -> Callable:
     """
     Converts a model for response result.
     """

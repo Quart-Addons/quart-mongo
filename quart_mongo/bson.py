@@ -3,7 +3,7 @@ quart_mongo.bson
 
 Provides BSON converter for Quart.
 """
-import typing as t
+from typing import Any
 
 from bson.errors import InvalidId
 from bson.objectid import ObjectId
@@ -46,7 +46,7 @@ class BSONObjectIdConverter(BaseConverter):
         except InvalidId:
             abort(404)
 
-    def to_url(self, value: t.Any) -> str:
+    def to_url(self, value: Any) -> str:
         """
         Converts a value to a URL string.
         """
