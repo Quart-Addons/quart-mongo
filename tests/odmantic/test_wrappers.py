@@ -9,28 +9,27 @@ from werkzeug.exceptions import NotFound
 from quart_mongo import Mongo
 
 from .models import Things
-from .utils import teardown
+from tests.utils import teardown
 
 @pytest.mark.asyncio
-async def test_odmantic_find_one_or_404_notfound(
-    app: Quart, mongo_uri: Mongo) -> None:
+async def test_odmantic_find_one_or_404_notfound(uri: str) -> None:
     """
     Test not found for `Odmantic.db.find_one_or_404`.
     """
-    mongo = mongo_uri
+    app = Quart(__name__)
+    mongo = Mongo(app, uri)
     await app.startup()
     with pytest.raises(NotFound):
         await mongo.odm.find_one_or_404(Things, Things.id == 'thing')
     await teardown(mongo)
 
 @pytest.mark.asyncio
-async def test_odmantic_find_one_or_404_found(
-    app: Quart, mongo_uri: Mongo
-    ) -> None:
+async def test_odmantic_find_one_or_404_found(uri: str) -> None:
     """
     Test found for `Odmantic.db.find_one_or_404``.
     """
-    mongo = mongo_uri
+    app= Quart(__name__)
+    mongo = Mongo(app, uri)
     await app.startup()
     thing = Things(id="thing", val="foo")
     await mongo.odm.save(thing)

@@ -7,7 +7,7 @@ from bson import ObjectId
 from werkzeug.exceptions import NotFound
 from quart_mongo.bson import BSONObjectIdConverter
 
-def test_bson_url_converter():
+def test_bson_url_converter() -> None:
     """
     Test BSON URL Converter.
     """

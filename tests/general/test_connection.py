@@ -7,40 +7,42 @@ from pymongo.errors import InvalidURI
 from quart import Quart
 from quart_mongo import Mongo
 
-from .utils import CouldNotConnect, wait_until_connected
+from tests.utils import CouldNotConnect, wait_until_connected
 
 @pytest.mark.asyncio
-async def test_client_connection(mongo_client_uri: Mongo):
+async def test_client_connection(client_uri: str) -> None:
     """
     Test client connection to the database.
     """
-    mongo = mongo_client_uri
+    app = Quart(__name__)
+    mongo = Mongo(app, client_uri)
     assert isinstance(mongo, Mongo)
 
-def test_invalid_uri(app: Quart) -> None:
+def test_invalid_uri() -> None:
     """
     Test an invalid Mongo URI.
     """
+    app = Quart(__name__)
     with pytest.raises(InvalidURI):
         Mongo(app, "http://localhost:27017/test")
 
-def test_database_failure(app: Quart) -> None:
+def test_database_failure() -> None:
     """
     Test database connection failure when no URI
     is provided directly to the class or app config.
     """
+    app = Quart(__name__)
     with pytest.raises(ValueError):
         Mongo(app)
 
 @pytest.mark.asyncio
-async def test_doesnt_connect_by_default(
-    app: Quart, mongo_uri: Mongo
-    ) -> None:
+async def test_doesnt_connect_by_default(uri: str) -> None:
     """
     Test that the database doesn't connect
     by default.
     """
-    mongo = mongo_uri
+    app = Quart(__name__)
+    mongo = Mongo(app, uri)
     await app.startup()
 
     with pytest.raises(CouldNotConnect):

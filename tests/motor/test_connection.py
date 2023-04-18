@@ -6,27 +6,25 @@ from quart import Quart
 from quart_mongo import Mongo
 from quart_mongo.wrappers import AIOMotorDatabase
 
-from .utils import teardown
+from tests.utils import teardown
 
 @pytest.mark.asyncio
-async def test_motor_database_success(
-    app: Quart, mongo_uri: Mongo
-    ) -> None:
+async def test_motor_database_success(uri: str) -> None:
     """
     Tests database successful connection.
     """
-    mongo = mongo_uri
+    app = Quart(__name__)
+    mongo = Mongo(app, uri)
     await app.startup()
     assert isinstance(mongo.db, AIOMotorDatabase)
     await teardown(mongo)
 
 @pytest.mark.asyncio
-async def test_multiple_motor_connections(
-    app: Quart, client_uri: Mongo
-    ) -> None:
+async def test_multiple_motor_connections(client_uri: str) -> None:
     """
     Tests multiple database connections.
     """
+    app = Quart(__name__)
     db1 = Mongo(app, uri=f"{client_uri}test1")
     db2 = Mongo(app, uri=f"{client_uri}test2")
     await app.startup()
@@ -36,20 +34,17 @@ async def test_multiple_motor_connections(
     await teardown(db2)
 
 @pytest.mark.asyncio
-async def test_motor_no_database_name_in_uri(
-    app: Quart, mongo_client_uri: Mongo
-    ) -> None:
+async def test_motor_no_database_name_in_uri(client_uri: str) -> None:
     """
     Test no database name in URI.
     """
-    mongo =  mongo_client_uri
+    app = Quart(__name__)
+    mongo =  Mongo(app, client_uri)
     await app.startup()
     assert mongo.db is None
 
 @pytest.mark.asyncio
-async def test_motor_custom_class(
-    app: Quart, uri: str
-    ) -> None:
+async def test_motor_custom_class(uri: str) -> None:
     """
     Test custom document class.
     """
@@ -57,7 +52,7 @@ async def test_motor_custom_class(
         """
         Custom document class.
         """
-
+    app = Quart(__name__)
     mongo = Mongo(app, uri, document_class = CustomDict)
     await app.startup()
     things = await mongo.db.things.find_one()

@@ -11,16 +11,15 @@ from quart import Quart
 from werkzeug.exceptions import NotFound
 from quart_mongo import Mongo
 
-from .utils import teardown
+from tests.utils import teardown
 
 @pytest.mark.asyncio
-async def test_saves_file(
-    app: Quart, mongo_uri: Mongo
-    ) -> None:
+async def test_saves_file(uri: str) -> None:
     """
     Tests if saves file.
     """
-    mongo = mongo_uri
+    app = Quart(__name__)
+    mongo = Mongo(app, uri)
     await app.startup()
     fileobj = BytesIO(b"these are the bytes")
     await mongo.save_file("my-file", fileobj)
@@ -29,13 +28,12 @@ async def test_saves_file(
     await teardown(mongo)
 
 @pytest.mark.asyncio
-async def test_guess_type_from_filename(
-    app: Quart, mongo_uri: Mongo
-    ) -> None:
+async def test_guess_type_from_filename(uri: str) -> None:
     """
     Test guess type for mimetype.
     """
-    mongo = mongo_uri
+    app = Quart(__name__)
+    mongo = Mongo(app, uri)
     await app.startup()
     fileobj = BytesIO(b"these are the bytes")
     id = await mongo.save_file("my-file.txt", fileobj)
@@ -45,13 +43,12 @@ async def test_guess_type_from_filename(
     await teardown(mongo)
 
 @pytest.mark.asyncio
-async def test_saves_files_with_props(
-    app: Quart, mongo_uri: Mongo
-    ) -> None:
+async def test_saves_files_with_props(uri: str) -> None:
     """
     Tests save files with properties.
     """
-    mongo = mongo_uri
+    app = Quart(__name__)
+    mongo = Mongo(app, uri)
     await app.startup()
     fileobj = BytesIO(b"these are the bytes")
     await mongo.save_file("my-file", fileobj, foo = "bar")
@@ -61,14 +58,13 @@ async def test_saves_files_with_props(
     await teardown(mongo)
 
 @pytest.mark.asyncio
-async def test_returns_id(
-    app: Quart, mongo_uri: Mongo
-    ) -> None:
+async def test_returns_id(uri: str) -> None:
     """
     Tests the return id from `Mongo.save_file` is
     an instance of `bson.ObjectId`.
     """
-    mongo = mongo_uri
+    app = Quart(__name__)
+    mongo = Mongo(app, uri)
     await app.startup()
     fileobj = BytesIO(b"these are the bytes")
     _id = await mongo.save_file("my-file", fileobj, foo = "bar")
@@ -76,27 +72,25 @@ async def test_returns_id(
     await teardown(mongo)
 
 @pytest.mark.asyncio
-async def test_404s_for_missing_files(
-    app: Quart, mongo_uri: Mongo
-    ) -> None:
+async def test_404s_for_missing_files(uri: str) -> None:
     """
     Tests that the extension will raise a 404 (Not Found)
     if the file does not exists.
     """
-    mongo = mongo_uri
+    app = Quart(__name__)
+    mongo = Mongo(app, uri)
     await app.startup()
     with pytest.raises(NotFound):
         await mongo.send_file("no-such-file.txt")
     await teardown(mongo)
 
 @pytest.mark.asyncio
-async def test_sets_content_types(
-    app: Quart, mongo_uri: Mongo
-    ) -> None:
+async def test_sets_content_types(uri: str) -> None:
     """
     Tests content type for the response.
     """
-    mongo = mongo_uri
+    app = Quart(__name__)
+    mongo = Mongo(app, uri)
     await app.startup()
     fileobj = BytesIO(b"a" * 500 * 1024)
     await mongo.save_file("myfile.txt", fileobj)
