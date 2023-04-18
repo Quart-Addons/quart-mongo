@@ -14,6 +14,7 @@ from quart_mongo import (
 )
 
 class Data(Model):
+    id: str = Field(primary_field=True)
     snake_case: str
 
 @pytest.mark.asyncio
@@ -28,7 +29,24 @@ async def test_request_casing() -> None:
     @mongo_validate_request(Data)
     async def index(data: Data) -> ResponseReturnValue:
         return str(data.dict())
-    
+
     client = app.test_client()
-    response = await client.post("/", json={"snakeCase": "Hello"})
-    assert await response.get_data(as_text=True) == "{'snake_case': 'Hello'}"
+    response = await client.post("/", json={"id": "Hello", "snakeCase": "World"})
+    assert await response.get_data(as_text=True) == "{'id': 'Hello', 'snakeCase': 'World'}"
+
+@pytest.mark.asyncio
+async def test_response_casing() -> None:
+    """
+    Test response casing.
+    """
+    app = Quart(__name__)
+    register_odmantic_schema(app, convert_casing=True)
+
+    @app.route("/", methods=["GET"])
+    @mongo_validate_response(Data)
+    async def index() -> ResponseReturnValue:
+        return Data(id="Hello", snake_case="World")
+
+    client = app.test_client()
+    response = await client.get("/")
+    assert await response.get_data(as_text=True) == "{'id': 'Hello', 'snake_case': 'World'}"
