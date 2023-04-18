@@ -2,7 +2,17 @@
 quart_mongo.typing
 """
 from __future__ import annotations
-import typing as t
+from typing import (
+    Any,
+    AnyStr,
+    Dict,
+    Optional,
+    Tuple,
+    Type,
+    TYPE_CHECKING,
+    TypeVar,
+    Union
+    )
 
 from odmantic import Model as ODM_Model
 from pydantic import BaseModel
@@ -17,7 +27,7 @@ from quart.typing import (
 from quart.wrappers import Response
 from werkzeug.datastructures import Headers
 
-if t.TYPE_CHECKING:
+if TYPE_CHECKING:
     from pydantic.dataclasses import Dataclass
 
 try:
@@ -25,18 +35,18 @@ try:
 except ImportError:
     from typing_extensions import Protocol # type: ignore
 
-Model = t.Union[t.Type[ODM_Model], t.Type[BaseModel], t.Type["Dataclass"], t.Type]
-PydanticModel = t.Union[t.Type[BaseModel], t.Type["Dataclass"]]
+Model = Union[Type[ODM_Model], Type[BaseModel], Type["Dataclass"], Type]
+PydanticModel = Union[Type[BaseModel], Type["Dataclass"]]
 
-ResponseValue = t.Union[QuartResponseValue, ODM_Model]
-HeadersValue = t.Union[QuartHeadersValue, PydanticModel]
+ResponseValue = Union[QuartResponseValue, ODM_Model]
+HeadersValue = Union[QuartHeadersValue, PydanticModel]
 
-ResponseReturnValue = t.Union[
+ResponseReturnValue = Union[
     QuartResponseReturnValue,
     ResponseValue,
-    t.Tuple[ResponseValue, HeadersValue],
-    t.Tuple[ResponseValue, StatusCode],
-    t.Tuple[ResponseValue, StatusCode, HeadersValue]
+    Tuple[ResponseValue, HeadersValue],
+    Tuple[ResponseValue, StatusCode],
+    Tuple[ResponseValue, StatusCode, HeadersValue]
 ]
 
 class WebsocketProtocol(Protocol):
@@ -54,19 +64,17 @@ class TestClientProtocol(Protocol):
         self,
         path: str,
         method: str,
-        headers: t.Optional[t.Union[dict, Headers]],
-        data: t.Optional[t.AnyStr],
-        form: t.Optional[dict],
-        files: t.Optional[t.Dict[str, FileStorage]],
-        query_string: t.Optional[dict],
-        json: t.Any,
+        headers: Optional[Union[dict, Headers]],
+        data: Optional[AnyStr],
+        form: Optional[dict],
+        files: Optional[Dict[str, FileStorage]],
+        query_string: Optional[dict],
+        json: Any,
         scheme: str,
         root_path: str,
         http_version: str,
-        scope_base: t.Optional[dict],
+        scope_base: Optional[dict],
     ) -> Response:
         ...
 
-ODM = t.TypeVar("ODM", bound=ODM_Model)
-BM = t.TypeVar("BM", bound=BaseModel)
-DC = t.TypeVar("DC", bound="Dataclass")
+ODM = TypeVar("ODM", bound=ODM_Model)
