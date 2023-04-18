@@ -38,7 +38,7 @@ def register_mongo_helpers(
         app.json_provider_class = MongoJSONProvider
         app.json = app.json_provider_class(app)
 
-def register_odmantic_schema(app: Quart, convert_casing: bool = True) -> None:
+def register_odmantic_schema(app: Quart, convert_casing: bool = False) -> None:
     """
     Registers `Odmantic` Schema helpers for sending and recieving `Odmantic.Models`
     with JSON.
