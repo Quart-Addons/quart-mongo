@@ -152,11 +152,11 @@ def mongo_validate_response(
             if status == status_code:
                 try:
                     if isinstance(value, dict):
-                        model_value = model_class.parse_doc(value)
+                        model_value = model_class(**value)
                     elif isinstance(value, model_class):
                         model_value = model_class
                     elif is_dataclass(value):
-                        model_value = model_class.parse_doc(asdict(value))
+                        model_value = model_class(**asdict(value))
                     else:
                         raise ResponseSchemaValidationError
                 except DocumentParsingError as error:
