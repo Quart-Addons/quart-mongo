@@ -17,8 +17,7 @@ class MongoJSONProvider(DefaultJSONProvider):
     that can handle MongoDB type objects.
     """
     def __init__(self, app: Quart) -> None:
-        json_options: JSONOptions | None \
-            = app.config.get("MONGO_JSON_OPTIONS", None)
+        json_options: JSONOptions | None = app.config["QUART_MONGO_JSON_OPTIONS"]
 
         if json_options is None:
             json_options = DEFAULT_JSON_OPTIONS

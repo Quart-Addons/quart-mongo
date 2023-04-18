@@ -48,7 +48,7 @@ def _get_uri(app: Quart, uri: Optional[str]) -> str:
         `ValueError`: If no MongoDB URI is found in the app configuration.
     """
     if uri is None:
-        uri = app.config.setdefault("MONGO_URI", None)
+        uri = app.config["QUART_MONGO_URI"]
 
     if uri is not None:
         return uri
