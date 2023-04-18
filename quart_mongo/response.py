@@ -4,7 +4,7 @@ quart_mongo.odm_models.response
 from functools import wraps
 from typing import Callable
 
-from humps import decamelize
+from humps import camelize
 from odmantic import Model
 from quart import current_app, Response, ResponseReturnValue
 
@@ -26,14 +26,14 @@ def convert_model_result(func: Callable) -> Callable:
 
         if isinstance(value, Model):
             # by_alias is not supported yet by `odmantic.dict()`.
-            model_or_value = value.dict()
+            dict_or_value = value.dict()
             was_model = True
         else:
-            model_or_value = value
+            dict_or_value = value
 
         if was_model and current_app.config["QUART_MONGO_CONVERT_CASING"]:
-            model_or_value = decamelize(model_or_value)
+            dict_or_value = camelize(dict_or_value)
 
-        return await func((model_or_value, status_or_headers, headers))
+        return await func((dict_or_value, status_or_headers, headers))
 
     return decorator
