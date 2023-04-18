@@ -5,6 +5,7 @@ Mongo DB extension for Quart.
 """
 from .const import ASCENDING, DESCENDING
 from .core import Mongo
+from .helpers import register_odmantic_schema
 from .json import MongoJSONProvider
 from .mixins import SchemaValidationError
 from .typing import ResponseReturnValue
@@ -20,6 +21,7 @@ __all__ = (
     "ASCENDING",
     "DESCENDING",
     "Mongo",
+    "register_odmantic_schema",
     "MongoJSONProvider",
     "SchemaValidationError",
     "ResponseReturnValue",

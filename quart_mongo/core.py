@@ -5,7 +5,6 @@ The extension for Quart Mongo.
 """
 from __future__ import annotations
 from typing import AnyStr, Optional, TYPE_CHECKING
-from types import new_class
 from mimetypes import guess_type
 
 from bson import ObjectId
@@ -16,8 +15,6 @@ from pymongo import uri_parser
 from quart import Quart, abort, current_app, request, Response, send_file
 from werkzeug.wsgi import wrap_file
 
-from .bson import BSONObjectIdConverter
-
 from .const import (
     GRIDFS_CACHE,
     GRIDFS_FILEOBJ,
@@ -26,11 +23,8 @@ from .const import (
 )
 
 from .config import MongoConfig, _get_uri
-from .json import MongoJSONProvider
-from .mixins import WebsocketMixin, TestClientMixin
+from .helpers import register_mongo_helpers
 from .wrappers import AIOMotorClient, AIOMotorDatabase, AIOEngine
-
-from .response import convert_model_result
 
 if TYPE_CHECKING:
     from _typeshed import SupportsRead
@@ -60,8 +54,8 @@ class Mongo(object):
             args: Arguments to pass to `AIOMotorClient` on intialization.
             kwargs: Extra agrugments to pass to `AIOMotorClient` on intialization.
         """
-        self.config: MongoConfig = None
         self.json_options: Optional[JSONOptions] = json_options
+        self.config: MongoConfig = None
         self.cx: AIOMotorClient = None
         self.db: AIOMotorDatabase = None
         self.odm: AIOEngine = None
@@ -86,6 +80,8 @@ class Mongo(object):
             args: Arguments to pass to `AIOMotorClient` on intialization.
             kwargs: Extra arguments to pass to `AIOMotorClient` on initialization.
         """
+        app.config.setdefault("QUART_MONGO_URI", None)
+
         uri = _get_uri(app, uri)
         args = tuple([uri] + list(args))
         parsed_uri = uri_parser.parse_uri(uri)
@@ -106,21 +102,8 @@ class Mongo(object):
         # Register before serving function with the app
         app.before_serving(self._before_serving)
 
-        # Register BSON converter
-        if app.config.setdefault("MONGO_BSON_CONVERTER", True) and \
-            "ObjectId" not in app.url_map.converters:
-            app.url_map.converters["ObjectId"] = BSONObjectIdConverter
-
-        # Register JSON Provider
-        if app.config.setdefault("MONGO_JSON_PROVIDER", True) and \
-            not isinstance(app.json, MongoJSONProvider):
-            app.json_provider_class = MongoJSONProvider
-            app.json = app.json_provider_class(app)
-
-        # Resgister Odmantic Models Helpers
-        app.test_client_class = new_class("TestClient", (TestClientMixin, app.test_app_class))
-        app.websocket_class = new_class("Websocket", (WebsocketMixin, app.websocket_class))
-        app.make_response = convert_model_result(app.make_response)
+        # Register BSON converter & JSON Provider
+        register_mongo_helpers(app, json_options = self.json_options)
 
     async def _before_serving(self) -> None:
         """
