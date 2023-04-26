@@ -12,6 +12,7 @@ from .typing import ResponseReturnValue
 from .validation import (
     RequestSchemaValidationError,
     ResponseSchemaValidationError,
+    DataSource,
     mongo_validate_request,
     mongo_validate_response,
     mongo_validate
@@ -27,6 +28,7 @@ __all__ = (
     "ResponseReturnValue",
     "RequestSchemaValidationError",
     "ResponseSchemaValidationError",
+    "DataSource",
     "mongo_validate_request",
     "mongo_validate_response",
     "mongo_validate"
