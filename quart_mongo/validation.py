@@ -154,7 +154,7 @@ def mongo_validate_response(
                     if isinstance(value, dict):
                         model_value = model_class(**value)
                     elif isinstance(value, model_class):
-                        model_value = model_class
+                        model_value = value
                     elif is_dataclass(value):
                         model_value = model_class(**asdict(value))
                     else:
