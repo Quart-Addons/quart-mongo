@@ -4,7 +4,7 @@ quart_mongo.wrappers.engine
 from odmantic import AIOEngine as _AIOEngine
 from quart import abort
 
-from quart_mongo.typing import ODM_Model
+from quart_mongo.typing import Model
 
 class AIOEngine(_AIOEngine):
     """
@@ -13,7 +13,7 @@ class AIOEngine(_AIOEngine):
 
     The purpose of this subclass is to add the function :func::`AIOEngine.find_one_or_404`.
     """
-    async def find_one_or_404(self, model: ODM_Model, *args, **kwargs) -> ODM_Model:
+    async def find_one_or_404(self, model: Model, *args, **kwargs) -> Model:
         """
         Find a single document or raise a 404 with the browser.
 
