@@ -24,6 +24,7 @@ from .const import (
 from .config import MongoConfig, _get_uri
 from .helpers import register_mongo_helpers
 from .wrappers import AIOMotorClient, AIOMotorDatabase, AIOEngine
+from .typing import JSONOptions
 
 if TYPE_CHECKING:
     from _typeshed import SupportsRead
@@ -118,7 +119,14 @@ class Mongo(object):
             self.odm = self.cx.odm(self.config.database)
 
     @staticmethod
-    def register_helpers(app: Quart, *args) -> None:
+    def register_helpers(
+        app: Quart,
+        bson: bool = True,
+        json: bool = True,
+        json_options: Optional[JSONOptions] = None,
+        schema: bool = True,
+        convert_casing: bool = False
+    ) -> None:
         """
         This is a shortcut to `quart_mongo.helpers.register_mongo_helers` function.
 
@@ -130,7 +138,14 @@ class Mongo(object):
             args: Arguments to be passed to the `register_mongo_helpers` function.
                 Refer to `register_mongo_helpers` function for arguments.
         """
-        register_mongo_helpers(app, *args)
+        register_mongo_helpers(
+            app,
+            bson,
+            json,
+            json_options,
+            schema,
+            convert_casing
+        )
 
     async def send_file(
         self,

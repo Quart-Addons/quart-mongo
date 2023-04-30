@@ -6,7 +6,6 @@ Helpers for Quart Mongo.
 from typing import Optional
 from types import new_class
 
-from bson.json_util import JSONOptions
 from quart import Quart
 
 from .bson import BSONObjectIdConverter
@@ -25,13 +24,15 @@ from .schema import (
     mongo_validate
 )
 
+from ..typing import JSONOptions
+
 def register_mongo_helpers(
         app: Quart,
         bson: bool = True,
         json: bool = True,
         json_options: Optional[JSONOptions] = None,
         schema: bool = True,
-        convert_casing: bool = True
+        convert_casing: bool = False
 ) -> None:
     """
     Registers Mongo Helpers with the Quart Extension.
@@ -55,7 +56,7 @@ def register_mongo_helpers(
             the app. Defaults to ``True``.
         convert_casing: Determines to convert camel casing from
             javascript. This is used with schema. Defaults to
-            ``True``.
+            ``False``.
     """
     # Setup configuration values
     app.config.setdefault("QUART_MONGO_BSON_CONVERTER", bson)

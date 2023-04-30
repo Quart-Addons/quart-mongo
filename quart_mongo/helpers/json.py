@@ -6,10 +6,12 @@ Provides JSON Provider for MongoDB.
 from typing import Any
 
 from bson import json_util, SON
-from bson.json_util import DEFAULT_JSON_OPTIONS, JSONOptions
+from bson.json_util import DEFAULT_JSON_OPTIONS
 from quart import Quart
 from quart.json.provider import _default, DefaultJSONProvider
 from six import iteritems, string_types
+
+from ..typing import JSONOptions
 
 class MongoJSONProvider(DefaultJSONProvider):
     """
