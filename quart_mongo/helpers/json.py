@@ -1,5 +1,5 @@
 """
-quart_mongo.json
+quart_mongo.helpers.json
 
 Provides JSON Provider for MongoDB.
 """

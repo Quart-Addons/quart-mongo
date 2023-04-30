@@ -1,5 +1,5 @@
 """
-quart_mongo.odm_models.response
+quart_mongo.helpers.schema.response
 """
 from functools import wraps
 from typing import Callable

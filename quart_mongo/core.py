@@ -8,7 +8,6 @@ from typing import AnyStr, Optional, TYPE_CHECKING
 from mimetypes import guess_type
 
 from bson import ObjectId
-from bson.json_util import JSONOptions
 from gridfs import NoFile
 from motor.motor_asyncio import AsyncIOMotorGridFSBucket
 from pymongo import uri_parser
@@ -39,7 +38,6 @@ class Mongo(object):
             self,
             app: Optional[Quart] = None,
             uri: Optional[str] = None,
-            json_options: Optional[JSONOptions] = None,
             *args,
             **kwargs
             ) -> None:
@@ -54,7 +52,6 @@ class Mongo(object):
             args: Arguments to pass to `AIOMotorClient` on intialization.
             kwargs: Extra agrugments to pass to `AIOMotorClient` on intialization.
         """
-        self.json_options: Optional[JSONOptions] = json_options
         self.config: MongoConfig = None
         self.cx: AIOMotorClient = None
         self.db: AIOMotorDatabase = None
@@ -102,9 +99,6 @@ class Mongo(object):
         # Register before serving function with the app
         app.before_serving(self._before_serving)
 
-        # Register BSON converter & JSON Provider
-        register_mongo_helpers(app, json_options = self.json_options)
-
     async def _before_serving(self) -> None:
         """
         Before Serving Function (Private)
@@ -122,6 +116,21 @@ class Mongo(object):
         if self.config.database:
             self.db = self.cx.motor(self.config.database)
             self.odm = self.cx.odm(self.config.database)
+
+    @staticmethod
+    def register_helpers(app: Quart, *args) -> None:
+        """
+        This is a shortcut to `quart_mongo.helpers.register_mongo_helers` function.
+
+        If using multiple instance of Mongo, only call this function onces to setup
+        the helpers with the `Quart` app.
+
+        Arguments:
+            app: The `Quart` application.
+            args: Arguments to be passed to the `register_mongo_helpers` function.
+                Refer to `register_mongo_helpers` function for arguments.
+        """
+        register_mongo_helpers(app, *args)
 
     async def send_file(
         self,

@@ -1,5 +1,5 @@
 """
-quart_mongo.odm_models.validation
+quart_mongo.helpers.schema.validation
 """
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ from quart import current_app, request, ResponseReturnValue as QuartResponseRetu
 from werkzeug.datastructures import Headers
 from werkzeug.exceptions import BadRequest
 
-from .typing import Model, PydanticModel, ResponseReturnValue
+from quart_mongo.typing import Model, PydanticModel, ResponseReturnValue
 
 QUART_MONGO_REQUEST_ATTRIBUTE = "_quart_mongo_request_schema"
 QUART_MONGO_RESPONSE_ATTRIBUTE = "_quart_mongo_response_schema"

@@ -1,5 +1,5 @@
 """
-quart_mongo.odm_models.mixins
+quart_mongo.helpers.schema.mixins
 """
 from typing import Any, AnyStr, cast, Dict, Optional, Tuple, Type, Union
 
@@ -11,7 +11,7 @@ from quart.datastructures import FileStorage
 from quart.testing.utils import sentinel
 from werkzeug.datastructures import Authorization, Headers
 
-from .typing import ODM, TestClientProtocol, WebsocketProtocol
+from quart_mongo.typing import ODM, TestClientProtocol, WebsocketProtocol
 
 class SchemaValidationError(Exception):
     """
