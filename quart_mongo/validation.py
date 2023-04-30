@@ -71,13 +71,14 @@ def mongo_validate_request(
         source: The source of the data validate (json or form
             encoded.)
     """
+    """
     schema = model_schema(model_class)
 
     if source == DataSource.FORM and any(
         schema["properties"][field]["type"] == "object" for field in schema["properties"]
     ):
         raise SchemaInvalidError("Form must not have nested objects.")
-
+    """
     def decorator(func: Callable) -> Callable:
         setattr(func, QUART_MONGO_REQUEST_ATTRIBUTE, (model_class, source))
 

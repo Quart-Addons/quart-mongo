@@ -45,9 +45,10 @@ async def test_send_form() -> None:
     app = Quart(__name__)
     register_odmantic_schema(app)
 
+    @app.ro
     @app.route("/", methods=["POST"])
     @mongo_validate_request(Details, source=DataSource.FORM)
-    async def index(data: Details) -> ResponseReturnValue:
+    async def index(data: ODM_Model) -> ResponseReturnValue:
         return data
 
     client = app.test_client()

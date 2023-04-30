@@ -178,16 +178,15 @@ class Mongo(object):
             raise TypeError(GRIDFS_FILEOBJ)
 
         if content_type is None:
-            content_type = guess_type(filename)[0]
+            info = guess_type(filename)
+            content_type = info[0]
 
-        kwargs["contentType"] = content_type
+        kwargs.setdefault("contentType", content_type)
 
         storage = AsyncIOMotorGridFSBucket(self.db, bucket_name = base)
 
         id = await storage.upload_from_stream(
-            filename,
-            fileobj,
-            metadata = kwargs
-        )
+            filename, fileobj, metadata = kwargs
+            )
 
         return id
