@@ -15,6 +15,7 @@ from typing import (
     )
 
 from bson.codec_options import CodecOptions as _CodecOptions
+from bson.json_util import JSONOptions as _JSONOptions
 from odmantic import Model as ODM_Model
 from pydantic import BaseModel
 from pymongo.read_preferences import _ServerMode
@@ -44,6 +45,8 @@ CodecOptions = _CodecOptions
 ReadConcern = _ReadConcern
 ServerMode = _ServerMode
 WriteConcern = _WriteConcern
+
+JSONOptions = _JSONOptions
 
 Model = Union[Type[ODM_Model], Type[BaseModel], Type["Dataclass"], Type]
 PydanticModel = Union[Type[BaseModel], Type["Dataclass"]]
