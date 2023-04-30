@@ -1,11 +1,11 @@
 """
-Test BSON url converter.
+Test BSON URL Converter.
 """
 import pytest
 
 from bson import ObjectId
 from werkzeug.exceptions import NotFound
-from quart_mongo.bson import BSONObjectIdConverter
+from quart_mongo.helpers.bson import BSONObjectIdConverter
 
 def test_bson_url_converter() -> None:
     """

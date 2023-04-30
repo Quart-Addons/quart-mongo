@@ -8,8 +8,9 @@ from quart import Quart
 from quart_mongo import Mongo
 from quart_mongo.wrappers import AIOEngine
 
-from .models import Things
 from tests.utils import teardown
+
+from .models import Things
 
 @pytest.mark.asyncio
 async def test_odmantic_database_success(uri: str) -> None:

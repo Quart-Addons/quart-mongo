@@ -1,12 +1,11 @@
 """
-Tests JSON provider for MongoDB.
+Tests JSON Provider for MongoDB.
 """
 import json
 import pytest
 
 from bson import ObjectId
 from quart import Quart, jsonify, request, Response
-from quart.typing import TestClientProtocol
 from six import ensure_str
 from quart_mongo import Mongo, MongoJSONProvider
 
@@ -19,7 +18,8 @@ async def test_provider_registered_with_app(client_uri: str) -> None:
     with the app.
     """
     app = Quart(__name__)
-    Mongo(app, client_uri)
+    mongo = Mongo(app, client_uri)
+    mongo.register_helpers(app)
     assert isinstance(app.json, MongoJSONProvider)
 
 @pytest.mark.asyncio
@@ -28,7 +28,8 @@ async def test_encodes_json(client_uri: str) -> None:
     Tests the encoding to JSON.
     """
     app = Quart(__name__)
-    Mongo(app, client_uri)
+    mongo = Mongo(app, client_uri)
+    mongo.register_helpers(app)
     async with app.app_context():
         resp = jsonify({"foo": "bar"})
         dumped = json.loads(ensure_str(await resp.get_data()))
@@ -40,7 +41,8 @@ async def test_handles_mongo_types(uri: str) -> None:
     Tests that JSON encoding handles Mongo types.
     """
     app = Quart(__name__)
-    Mongo(app, uri)
+    mongo = Mongo(app, uri)
+    mongo.register_helpers(app)
     id = "5cf29abb5167a14c9e6e12c4"
 
     @app.route("/get", methods=["GET"])
@@ -69,6 +71,7 @@ async def test_jsonifies_cursor(uri: str) -> None:
     """
     app = Quart(__name__)
     mongo = Mongo(app, uri)
+    mongo.register_helpers(app)
 
     @app.route("/get", methods=["GET"])
     async def get() -> Response:

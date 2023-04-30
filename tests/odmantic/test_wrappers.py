@@ -8,8 +8,9 @@ from quart import Quart
 from werkzeug.exceptions import NotFound
 from quart_mongo import Mongo
 
-from .models import Things
 from tests.utils import teardown
+
+from .models import Things
 
 @pytest.mark.asyncio
 async def test_odmantic_find_one_or_404_notfound(uri: str) -> None:

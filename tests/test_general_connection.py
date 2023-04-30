@@ -1,5 +1,5 @@
 """
-Test general connections to the database.
+Tests General Extension Connections.
 """
 import pytest
 
@@ -7,7 +7,7 @@ from pymongo.errors import InvalidURI
 from quart import Quart
 from quart_mongo import Mongo
 
-from tests.utils import CouldNotConnect, wait_until_connected
+from .utils import CouldNotConnect, wait_until_connected
 
 @pytest.mark.asyncio
 async def test_client_connection(client_uri: str) -> None:

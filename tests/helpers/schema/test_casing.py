@@ -7,7 +7,7 @@ from odmantic import Model, Field
 from quart import Quart
 
 from quart_mongo import (
-    register_odmantic_schema,
+    register_mongo_helpers,
     ResponseReturnValue,
     mongo_validate_request,
     mongo_validate_response
@@ -23,7 +23,7 @@ async def test_request_casing() -> None:
     Test request casing.
     """
     app = Quart(__name__)
-    register_odmantic_schema(app, convert_casing=True)
+    register_mongo_helpers(app, convert_casing=True)
 
     @app.route("/", methods=["POST"])
     @mongo_validate_request(Data)
@@ -40,7 +40,7 @@ async def test_response_casing() -> None:
     Test response casing.
     """
     app = Quart(__name__)
-    register_odmantic_schema(app, convert_casing=True)
+    register_mongo_helpers(app, convert_casing=True)
 
     @app.route("/", methods=["GET"])
     @mongo_validate_response(Data)

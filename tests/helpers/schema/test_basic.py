@@ -4,10 +4,9 @@ Test basic schema.
 import pytest
 
 from quart import Quart
-from quart_mongo import register_odmantic_schema, ResponseReturnValue
-from quart_mongo.typing import ODM_Model
+from quart_mongo import register_mongo_helpers, ResponseReturnValue
 
-from ..models import Things
+from tests.odmantic.models import Things
 
 @pytest.mark.asyncio
 async def test_make_response() -> None:
@@ -15,7 +14,7 @@ async def test_make_response() -> None:
     Test make response.
     """
     app = Quart(__name__)
-    register_odmantic_schema(app)
+    register_mongo_helpers(app)
 
     @app.route("/")
     async def index() -> ResponseReturnValue:

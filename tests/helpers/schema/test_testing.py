@@ -9,7 +9,7 @@ from quart import Quart
 
 from quart_mongo import (
     DataSource,
-    register_odmantic_schema,
+    register_mongo_helpers,
     ResponseReturnValue, 
     mongo_validate_request)
 
@@ -26,7 +26,7 @@ async def test_send_json() -> None:
     Test sending JSON
     """
     app = Quart(__name__)
-    register_odmantic_schema(app)
+    register_mongo_helpers(app)
 
     @app.route("/", methods=["POST"])
     @mongo_validate_request(Details)
@@ -43,9 +43,8 @@ async def test_send_form() -> None:
     Test sending from Form.
     """
     app = Quart(__name__)
-    register_odmantic_schema(app)
+    register_mongo_helpers(app)
 
-    @app.ro
     @app.route("/", methods=["POST"])
     @mongo_validate_request(Details, source=DataSource.FORM)
     async def index(data: ODM_Model) -> ResponseReturnValue:
