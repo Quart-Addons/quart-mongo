@@ -14,8 +14,13 @@ from typing import (
     Union
     )
 
+from bson.codec_options import CodecOptions as _CodecOptions
 from odmantic import Model as ODM_Model
 from pydantic import BaseModel
+from pymongo.read_preferences import _ServerMode
+from pymongo.read_concern import ReadConcern as _ReadConcern
+from pymongo.write_concern import WriteConcern as _WriteConcern
+
 from quart import Quart
 from quart.datastructures import FileStorage
 from quart.typing import (
@@ -34,6 +39,11 @@ try:
     from typing import Protocol
 except ImportError:
     from typing_extensions import Protocol # type: ignore
+
+CodecOptions = _CodecOptions
+ReadConcern = _ReadConcern
+ServerMode = _ServerMode
+WriteConcern = _WriteConcern
 
 Model = Union[Type[ODM_Model], Type[BaseModel], Type["Dataclass"], Type]
 PydanticModel = Union[Type[BaseModel], Type["Dataclass"]]
