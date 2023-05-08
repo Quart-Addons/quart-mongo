@@ -4,15 +4,15 @@ quart_mongo.core
 The extension for Quart Mongo.
 """
 from __future__ import annotations
+from inspect import isawaitable
+import mimetypes
 from typing import AnyStr, Optional, TYPE_CHECKING
-from mimetypes import guess_type
 
 from bson import ObjectId
 from gridfs import NoFile
 from motor.motor_asyncio import AsyncIOMotorGridFSBucket
 from pymongo import uri_parser
-from quart import Quart, abort, current_app, request, Response, send_file
-from werkzeug.wsgi import wrap_file
+from quart import Quart, abort, request, Response, send_file
 
 from .const import (
     GRIDFS_CACHE,
@@ -28,6 +28,7 @@ from .typing import JSONOptions
 
 if TYPE_CHECKING:
     from _typeshed import SupportsRead
+    from motor.motor_asyncio import AsyncIOMotorGridIn
 
 class Mongo(object):
     """
@@ -147,7 +148,7 @@ class Mongo(object):
             convert_casing
         )
 
-    async def send_file(
+    async def send_file_by_name(
         self,
         filename: str,
         base: str = "fs",
@@ -167,31 +168,54 @@ class Mongo(object):
         storage = AsyncIOMotorGridFSBucket(self.db, bucket_name = base)
 
         try:
-            fileobj = await storage.open_download_stream_by_name(
-                filename, revision = version
-            )
+            grid_out = await storage.open_download_stream_by_name(filename, version)
         except NoFile:
             abort(404)
 
-        data = wrap_file(request, fileobj, buffer_size=1024 * 255)
-        response = current_app.response_class(
-            data, mimetype = fileobj.content_type
-            )
-        response.content_length = fileobj.length
-        response.last_modified = fileobj.upload_date
-        response.set_etag(fileobj.md5)
-        response.cache_control.max_age = cache_for
-        response.cache_control.public = True
-        response.make_conditional(request)
+        file_obj = await grid_out.read()
+        mimetype = grid_out.metadata["contentType"]
+
+        response= await send_file(
+            file_obj,
+            mimetype=mimetype,
+            attachment_filename=filename,
+            cache_timeout=cache_for)
+        response = await response.make_conditional(request)
         return response
+
+    async def send_file_by_id(
+            self,
+            id: ObjectId,
+            base: str = "fs",
+            cache_for: int = 31536000
+            ) -> Response:
+        """
+        Send a file by id.
+        """
+        storage = AsyncIOMotorGridFSBucket(self.db, bucket_name = base)
+
+        try:
+            grid_out = await storage.open_download_stream(id)
+        except NoFile:
+            abort(404)
+
+        file_obj = await grid_out.read()
+        mimetype = grid_out.metadata["contentType"]
+        attachment_filename = grid_out.filename
+
+        response = await send_file(
+            file_obj,
+            mimetype=mimetype,
+            attachment_filename=attachment_filename,
+            cache_timeout=cache_for
+        )
 
     async def save_file(
         self,
         filename: str,
         fileobj: SupportsRead[AnyStr],
         base: str = "fs",
-        content_type: str | None = None,
-        **kwargs
+        content_type: Optional[str] = None
         ) -> ObjectId:
         """
         Save a file like object to GridFS using the given filename.
@@ -202,15 +226,18 @@ class Mongo(object):
             raise TypeError(GRIDFS_FILEOBJ)
 
         if content_type is None:
-            info = guess_type(filename)
-            content_type = info[0]
-
-        kwargs.setdefault("contentType", content_type)
+            content_type = mimetypes.guess_type(filename)[0]
 
         storage = AsyncIOMotorGridFSBucket(self.db, bucket_name = base)
 
-        id = await storage.upload_from_stream(
-            filename, fileobj, metadata = kwargs
-            )
+        if isawaitable(fileobj.read()):
+            data = await fileobj.read()
+        else:
+            data = fileobj.read()
 
-        return id
+        grid_in = storage.open_upload_stream(
+            filename, metadata={"contentType": content_type}
+        )
+        await grid_in.write(data)
+        await grid_in.close()
+        return grid_in._id
