@@ -66,7 +66,7 @@ async def test_404s_for_missing_files(uri: str) -> None:
     mongo = Mongo(app, uri)
     await app.startup()
     with pytest.raises(NotFound):
-        await mongo.send_file("no-such-file.txt")
+        await mongo.send_file_by_name("no-such-file.txt")
     await teardown(mongo)
 
 @pytest.mark.asyncio

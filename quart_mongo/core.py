@@ -12,17 +12,17 @@ from bson import ObjectId
 from gridfs import NoFile
 from motor.motor_asyncio import AsyncIOMotorGridFSBucket
 from pymongo import uri_parser
-from quart import Quart, abort, request, Response, send_file
-
-from .const import (
-    GRIDFS_CACHE,
-    GRIDFS_FILEOBJ,
-    GRIDFS_STRING,
-    GRIDFS_VERSION
-)
+from quart import Quart, abort, Response
 
 from .config import MongoConfig, _get_uri
 from .helpers import register_mongo_helpers
+
+from .utils import (
+    check_file_object,
+    check_gridfs_arguments,
+    create_response
+)
+
 from .wrappers import AIOMotorClient, AIOMotorDatabase, AIOEngine
 from .typing import JSONOptions
 
@@ -158,12 +158,7 @@ class Mongo(object):
         """
         Respond with a file from GridFS.
         """
-        if not isinstance(base, str):
-            raise TypeError(GRIDFS_STRING)
-        if not isinstance(version, int):
-            raise TypeError(GRIDFS_VERSION)
-        if not isinstance(cache_for, int):
-            raise TypeError(GRIDFS_CACHE)
+        check_gridfs_arguments(base, version, cache_for)
 
         storage = AsyncIOMotorGridFSBucket(self.db, bucket_name = base)
 
@@ -172,26 +167,22 @@ class Mongo(object):
         except NoFile:
             abort(404)
 
-        file_obj = await grid_out.read()
-        mimetype = grid_out.metadata["contentType"]
-
-        response= await send_file(
-            file_obj,
-            mimetype=mimetype,
-            attachment_filename=filename,
-            cache_timeout=cache_for)
-        response = await response.make_conditional(request)
-        return response
+        return await create_response(
+            grid_out, filename=filename, cache_timeout=cache_for
+        )
 
     async def send_file_by_id(
             self,
             id: ObjectId,
             base: str = "fs",
+            version: int = -1,
             cache_for: int = 31536000
             ) -> Response:
         """
         Send a file by id.
         """
+        check_gridfs_arguments(base, version, cache_for)
+
         storage = AsyncIOMotorGridFSBucket(self.db, bucket_name = base)
 
         try:
@@ -199,34 +190,37 @@ class Mongo(object):
         except NoFile:
             abort(404)
 
-        file_obj = await grid_out.read()
-        mimetype = grid_out.metadata["contentType"]
-        attachment_filename = grid_out.filename
-
-        response = await send_file(
-            file_obj,
-            mimetype=mimetype,
-            attachment_filename=attachment_filename,
-            cache_timeout=cache_for
-        )
+        return await create_response(grid_out, cache_timeout=cache_for)
 
     async def save_file(
         self,
         filename: str,
         fileobj: SupportsRead[AnyStr],
         base: str = "fs",
-        content_type: Optional[str] = None
+        content_type: Optional[str] = None,
+        **kwargs
         ) -> ObjectId:
         """
         Save a file like object to GridFS using the given filename.
         """
-        if not isinstance(base, str):
-            raise TypeError(GRIDFS_STRING)
-        if not (hasattr(fileobj, "read") and callable(fileobj.read)):
-            raise TypeError(GRIDFS_FILEOBJ)
+        check_gridfs_arguments(
+            check_base=True,
+            base=base,
+            check_version=False,
+            check_cache_for=False
+        )
+
+        check_file_object(fileobj)
+
+        if kwargs:
+            metadata = kwargs.copy()
+        else:
+            metadata = {}
+
+        content_type = metadata.setdefault('contentType', content_type)
 
         if content_type is None:
-            content_type = mimetypes.guess_type(filename)[0]
+            metadata['contentType'] = mimetypes.guess_type(filename)[0]
 
         storage = AsyncIOMotorGridFSBucket(self.db, bucket_name = base)
 
@@ -235,9 +229,8 @@ class Mongo(object):
         else:
             data = fileobj.read()
 
-        grid_in = storage.open_upload_stream(
-            filename, metadata={"contentType": content_type}
-        )
+        grid_in = storage.open_upload_stream(filename, metadata=metadata)
+
         await grid_in.write(data)
         await grid_in.close()
         return grid_in._id
