@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import AnyStr, Optional, TYPE_CHECKING
 
 from motor.motor_asyncio import AsyncIOMotorGridOut
-from quart import Response, send_file
+from quart import Response
 
 from .const import (
     GRIDFS_FILEOBJ,
