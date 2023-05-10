@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import AnyStr, Optional, TYPE_CHECKING
 
 from motor.motor_asyncio import AsyncIOMotorGridOut
-from quart import Response
+from quart import Response, request, send_file
 
 from .const import (
     GRIDFS_FILEOBJ,
@@ -71,5 +71,6 @@ async def create_response(
         mimetype=mimetype,
         attachment_filename=attachment_filename,
         cache_timeout=cache_timeout,
+        conditional=True,
         last_modified=last_modified
     )
