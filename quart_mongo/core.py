@@ -30,7 +30,7 @@ if TYPE_CHECKING:
     from _typeshed import SupportsRead
     from motor.motor_asyncio import AsyncIOMotorGridIn
 
-class Mongo(object):
+class Mongo:
     """
     This class is for integrating MongoDB into your `Quart` application. It
     intergrates with MongoDB by using `Motor` and `Odmantic`. It also provides
@@ -158,7 +158,7 @@ class Mongo(object):
         """
         Respond with a file from GridFS.
         """
-        check_gridfs_arguments(base, version, cache_for)
+        check_gridfs_arguments(base=base, version=version, cache_for=cache_for)
 
         storage = AsyncIOMotorGridFSBucket(self.db, bucket_name = base)
 
@@ -181,7 +181,7 @@ class Mongo(object):
         """
         Send a file by id.
         """
-        check_gridfs_arguments(base, version, cache_for)
+        check_gridfs_arguments(base=base, version=version, cache_for=cache_for)
 
         storage = AsyncIOMotorGridFSBucket(self.db, bucket_name = base)
 
