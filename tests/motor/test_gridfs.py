@@ -43,6 +43,21 @@ async def test_guess_type_from_filename(uri: str) -> None:
     await teardown(mongo)
 
 @pytest.mark.asyncio
+async def test_saves_file_with_props(uri: str) -> None:
+    """
+    Tests saves file with properties.
+    """
+    app = Quart(__name__)
+    mongo = Mongo(app, uri)
+    await app.startup()
+    fileobj = BytesIO(b"these are the bytes")
+    id = await mongo.save_file("file.txt", fileobj, foo="bar")
+    storage = AsyncIOMotorGridFSBucket(mongo.db)
+    gridfile = await storage.open_download_stream(id)
+    assert gridfile.metadata["foo"] == "bar"
+    await teardown(mongo)
+
+@pytest.mark.asyncio
 async def test_returns_id(uri: str) -> None:
     """
     Tests the return id from `Mongo.save_file` is
@@ -104,7 +119,8 @@ async def test_sets_content_length(uri: str) -> None:
 
     async with app.test_request_context("/"):
         resp = await mongo.send_file_by_name("myfile.txt")
-        assert resp.content_length == len(fileobj.getvalue())
+        assert resp.content_length == len(fileobj.getbuffer())
+    await teardown(mongo)
 
 @pytest.mark.asyncio
 async def test_sets_supports_conditional_gets(uri: str) -> None:
@@ -125,3 +141,21 @@ async def test_sets_supports_conditional_gets(uri: str) -> None:
         resp = await mongo.send_file_by_name("myfile.txt")
         assert resp.status_code == 200
     await teardown(mongo)
+
+@pytest.mark.asyncio
+async def test_sets_cache_headers(uri: str) -> None:
+    """
+    Tests cache headers
+    """
+    app = Quart(__name__)
+    mongo = Mongo(app, uri)
+    await app.startup()
+    fileobj = BytesIO(b"a" * 500 * 1024)
+    await mongo.save_file("myfile.txt", fileobj)
+
+    async with app.test_request_context("/"):
+        resp = await mongo.send_file_by_name("myfile.txt", cache_for=60)
+        assert resp.cache_control.max_age == 60
+        assert resp.cache_control.public is True
+    await teardown(mongo)
+ 
