@@ -71,8 +71,7 @@ def register_mongo_helpers(
 
     # Register JSON Provider
     if app.config["QUART_MONGO_JSON_PROVIDER"]:
-        app.json_provider_class = MongoJSONProvider
-        app.json = app.json_provider_class(app)
+        app.json = MongoJSONProvider(app)
 
     # Register Schema Helpers
     if app.config["QUART_MONGO_SCHEMA"]:
