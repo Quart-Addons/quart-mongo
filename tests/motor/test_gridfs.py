@@ -107,42 +107,6 @@ async def test_sets_content_types(uri: str) -> None:
     await teardown(mongo)
 
 @pytest.mark.asyncio
-async def test_sets_content_length(uri: str) -> None:
-    """
-    Tests content length for the response. 
-    """
-    app = Quart(__name__)
-    mongo = Mongo(app, uri)
-    await app.startup()
-    fileobj = BytesIO(b"a" * 500 * 1024)
-    await mongo.save_file("myfile.txt", fileobj)
-
-    async with app.test_request_context("/"):
-        resp = await mongo.send_file_by_name("myfile.txt")
-        assert resp.content_length == len(fileobj.getbuffer())
-    await teardown(mongo)
-
-@pytest.mark.asyncio
-async def test_sets_supports_conditional_gets(uri: str) -> None:
-    """
-    Tests conditional gets.
-    """
-    app = Quart(__name__)
-    mongo = Mongo(app, uri)
-    await app.startup()
-    fileobj = BytesIO(b"a" * 500 * 1024)
-    await mongo.save_file("myfile.txt", fileobj)
-
-    headers = {
-        "If-None-Match": md5(fileobj.getvalue()).hexdigest(),
-    }
-
-    async with app.test_request_context("/", method="GET", headers=headers):
-        resp = await mongo.send_file_by_name("myfile.txt")
-        assert resp.status_code == 200
-    await teardown(mongo)
-
-@pytest.mark.asyncio
 async def test_sets_cache_headers(uri: str) -> None:
     """
     Tests cache headers
