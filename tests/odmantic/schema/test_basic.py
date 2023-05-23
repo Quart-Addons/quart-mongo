@@ -2,6 +2,7 @@ from pathlib import Path
 from uuid import UUID
 
 import pytest
+from bson import ObjectId
 from odmantic import Model
 from quart import Quart
 from quart_mongo import Mongo
@@ -32,20 +33,21 @@ class OdmanticEncoded(Model):
     b: Path
 
 @pytest.mark.asyncio
-async def test_make_odmantic_encoder_response(uri: str) -> None:
+async def test_make_odmantic_encoder_response() -> None:
     """
     Tests encoder response.
     """
     app = Quart(__name__)
     app.config.setdefault("QUART_MONGO_JSON_OPTIONS", None)
-    Mongo(app, uri)
     QuartSchema(app)
     app.json = JSONProvider(app)
 
+    id = ObjectId("5cf29abb5167a14c9e6e12c4")
+
     @app.route("/")
     async def index() -> OdmanticEncoded:
-        return OdmanticEncoded(a=UUID("23ef2e02-1c20-49de-b05e-e9fe2431c474"), b=Path("/"))
-    
+        return OdmanticEncoded(a=UUID("23ef2e02-1c20-49de-b05e-e9fe2431c474"), b=Path("/"), id=id)
+
     client = app.test_client()
     response = await client.get("/")
-    assert (await response.get_json()) == {"a": "23ef2e02-1c20-49de-b05e-e9fe2431c474", "b": "/"}
+    assert (await response.get_json()) == {"a": "23ef2e02-1c20-49de-b05e-e9fe2431c474", "b": "/", "id": {"$oid": "5cf29abb5167a14c9e6e12c4"}}

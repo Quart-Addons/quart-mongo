@@ -7,6 +7,7 @@ from typing import Any
 
 from bson import json_util, SON
 from bson.json_util import DEFAULT_JSON_OPTIONS
+from pydantic.json import pydantic_encoder
 from quart import Quart
 from quart.json.provider import _default, DefaultJSONProvider
 from six import iteritems, string_types
@@ -45,3 +46,36 @@ class MongoJSONProvider(DefaultJSONProvider):
                 json_util.default(object_, **self._default_kwargs)
             except TypeError:
                 return _default(object_)
+
+def mongo_json(object_: Any) -> Any:
+    pass
+
+class JSONProvider(DefaultJSONProvider):
+
+    def __init__(self, app: Quart) -> None:
+        json_options: JSONOptions | None = app.config["QUART_MONGO_JSON_OPTIONS"]
+
+        if json_options is None:
+            json_options = DEFAULT_JSON_OPTIONS
+        self._default_kwargs = {"json_options": json_options}
+        super().__init__(app)
+
+    def mongo_json(self, object_: Any) -> Any:
+        """
+        Handles Mongo JSON types.
+        """
+        if hasattr(object_, "iteritems") or hasattr(object_, "items"):
+            return SON((k, self.default(v)) for k, v in iteritems(object_))
+        elif hasattr(object_, "__iter__") and not isinstance(object_, string_types):
+            return [self.default(v) for v in object_]
+        else:
+            return json_util.default(object_, **self._default_kwargs)
+
+    def default(self, object_: Any) -> Any:
+        try:
+            return super().default(object_)
+        except TypeError:
+            try:
+                return self.mongo_json(object_)
+            except TypeError:
+                return pydantic_encoder(object_)
