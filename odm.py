@@ -8,4 +8,4 @@ class OdmanticEncoded(Model):
 
 odm = OdmanticEncoded(a=UUID("23ef2e02-1c20-49de-b05e-e9fe2431c474"), b=Path("/"))
 
-print(odm.doc())
+print(odm.id)
