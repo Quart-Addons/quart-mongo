@@ -15,6 +15,7 @@ motor = "^3.1.1"
 pymongo = "^4.3.3"
 pyhumps = "^3.8.0"
 pydantic = "^1.10.7"
+quart-schema = "^0.16.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.2.2"
