@@ -5,13 +5,13 @@ from __future__ import annotations
 from typing import Dict, Optional
 
 from motor import motor_asyncio
-from motor.core import AgnosticBaseProperties
 from odmantic import AIOEngine as _AIOEngine, Model
 from pymongo.collection import Collection
 from pymongo.database import Database
 from quart import abort
 
 from quart_mongo.typing import (
+    AgnosticBaseProperties,
     CodecOptions,
     ServerMode,
     ReadConcern,
