@@ -55,10 +55,11 @@ class Mongo:
             args: Arguments to pass to `AIOMotorClient` on intialization.
             kwargs: Extra agrugments to pass to `AIOMotorClient` on intialization.
         """
-        self.config: MongoConfig = None
-        self.cx: AIOMotorClient = None
-        self.db: AIOMotorDatabase = None
-        self.odm: AIOEngine = None
+        self.config: Optional[MongoConfig] = None
+        self.cx: Optional[AIOMotorClient] = None
+        self.db: Optional[AIOMotorDatabase] = None
+        self.odm: Optional[AIOEngine] = None
+
         if app is not None:
             self.init_app(app, uri, json_options, *args, **kwargs)
 
