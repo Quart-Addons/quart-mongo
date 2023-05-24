@@ -1,3 +1,0 @@
-"""
-Test odmantic schema validation
-"""
