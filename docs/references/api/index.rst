@@ -7,5 +7,6 @@ API Reference
 .. toctree::
    :maxdepth: 1 
    
-   configuration.rst 
-   [ADD REMAINING TOCTREE HERE]
+   core.rst 
+   helpers.rst
+   wrappers.rst

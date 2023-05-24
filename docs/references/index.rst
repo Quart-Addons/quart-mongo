@@ -9,5 +9,6 @@ References
 
 
    api/index.rst
-   cheatsheet.rst
+   changelog.rst
+   contributing.rst
    logo.rst
