@@ -15,7 +15,7 @@ from pymongo import uri_parser
 from quart import Quart, abort, Response
 
 from .config import MongoConfig, _get_uri
-from .helpers import register_mongo_helpers
+from .helpers import BSONObjectIdConverter, MongoJSONProvider
 
 from .utils import (
     check_file_object,
@@ -40,6 +40,7 @@ class Mongo:
             self,
             app: Optional[Quart] = None,
             uri: Optional[str] = None,
+            json_options: Optional[JSONOptions] = None,
             *args,
             **kwargs
             ) -> None:
@@ -59,12 +60,13 @@ class Mongo:
         self.db: AIOMotorDatabase = None
         self.odm: AIOEngine = None
         if app is not None:
-            self.init_app(app, uri, *args, **kwargs)
+            self.init_app(app, uri, json_options, *args, **kwargs)
 
     def init_app(
             self,
             app: Quart,
-            uri: str | None = None,
+            uri: Optional[str] = None,
+            json_options: Optional[JSONOptions] = None,
             *args,
             **kwargs
             ) -> None:
@@ -79,8 +81,6 @@ class Mongo:
             args: Arguments to pass to `AIOMotorClient` on intialization.
             kwargs: Extra arguments to pass to `AIOMotorClient` on initialization.
         """
-        app.config.setdefault("QUART_MONGO_URI", None)
-
         uri = _get_uri(app, uri)
         args = tuple([uri] + list(args))
         parsed_uri = uri_parser.parse_uri(uri)
@@ -99,9 +99,18 @@ class Mongo:
         )
 
         # Register before serving function with the app
-        app.before_serving(self._before_serving)
+        app.before_serving(self._setup_db)
 
-    async def _before_serving(self) -> None:
+        # Register helpers with the app.
+        # This only needs to happen if they have not already been registered.
+        # In case of multiple instance of this class.
+        if not "ObjectId" in app.url_map.converters:
+            app.url_map.converters["ObjectId"] = BSONObjectIdConverter
+
+        if not isinstance(app.json, MongoJSONProvider):
+            app.json = MongoJSONProvider(app)
+
+    async def _setup_db(self) -> None:
         """
         Before Serving Function (Private)
 
@@ -118,35 +127,6 @@ class Mongo:
         if self.config.database:
             self.db = self.cx.motor(self.config.database)
             self.odm = self.cx.odm(self.config.database)
-
-    @staticmethod
-    def register_helpers(
-        app: Quart,
-        bson: bool = True,
-        json: bool = True,
-        json_options: Optional[JSONOptions] = None,
-        schema: bool = True,
-        convert_casing: bool = False
-    ) -> None:
-        """
-        This is a shortcut to `quart_mongo.helpers.register_mongo_helers` function.
-
-        If using multiple instance of Mongo, only call this function onces to setup
-        the helpers with the `Quart` app.
-
-        Arguments:
-            app: The `Quart` application.
-            args: Arguments to be passed to the `register_mongo_helpers` function.
-                Refer to `register_mongo_helpers` function for arguments.
-        """
-        register_mongo_helpers(
-            app,
-            bson,
-            json,
-            json_options,
-            schema,
-            convert_casing
-        )
 
     async def send_file_by_name(
         self,
