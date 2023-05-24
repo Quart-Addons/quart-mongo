@@ -2,8 +2,28 @@
 How to Guides
 =============
 
-.. toctree::
-   :maxdepth: 1
+General
+-------
 
+.. toctree::
+   :maxdepth: 2
+
+   compatibility.rst
    configuration.rst
-   [ADD REMAINING FILES FOR TOCTREE]
+
+Motor
+-----
+
+.. toctree::
+   :maxdepth: 2
+
+   motor/index.rst
+
+Odmantic
+--------
+
+.. toctree::
+   :maxdepth: 2
+
+   odmantic/index.rst
+  
