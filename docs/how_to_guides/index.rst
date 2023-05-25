@@ -17,7 +17,7 @@ Motor
 .. toctree::
    :maxdepth: 2
 
-   motor/index.rst
+   motor.rst
 
 Odmantic
 --------
@@ -25,5 +25,5 @@ Odmantic
 .. toctree::
    :maxdepth: 2
 
-   odmantic/index.rst
+   odmantic.rst
   

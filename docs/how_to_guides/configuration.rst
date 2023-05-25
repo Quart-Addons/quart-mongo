@@ -1,5 +1,8 @@
-Configuration:
---------------
+.. _Config:
+
+=============
+Configuration
+=============
 
 You can configure Quart-Mongo either by passing a `MongoDB URI
 <https://docs.mongodb.com/manual/reference/connection-string/>`_ to the
