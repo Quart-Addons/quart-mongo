@@ -137,7 +137,25 @@ class Mongo:
         cache_for: int = 31536000
         ) -> Response:
         """
-        Respond with a file from GridFS.
+        Respond with a file from GridFS using the file name.
+
+        Returns an instance of the :attr:`~quart.Quart.response_class`
+        containing the named file, and implement conditional GET semantics.
+
+        .. code-block:: python
+
+            @app.route("/uploads/<path:filename>")
+            async def get_upload(filename):
+                return await mongo.send_file_by_name(filename)
+
+        Arguments:
+            filename: The filename of the file to return
+            base: The base name of the GridFS collections to use
+            version: If positive, return the Nth revision of the file
+                identified by filename; if negative, return the Nth most recent
+                revision. If no such version exists, return with HTTP status 404.
+            int cache_for: Number of seconds that browsers should be
+                instructed to cache responses
         """
         check_gridfs_arguments(base=base, version=version, cache_for=cache_for)
 
@@ -160,7 +178,25 @@ class Mongo:
             cache_for: int = 31536000
             ) -> Response:
         """
-        Send a file by id.
+        Respond with a file from GridFS using the file Object id.
+
+        Returns an instance of the :attr:`~quart.Quart.response_class`
+        containing the named file, and implement conditional GET semantics.
+
+        .. code-block:: python
+
+            @app.route("/uploads/<str:id>")
+            async def get_upload(id):
+                return await mongo.send_file_by_id(id)
+
+        Arguments:
+            id: The bson Object id of the file.
+            base: The base name of the GridFS collections to use
+            version: If positive, return the Nth revision of the file
+                identified by filename; if negative, return the Nth most recent
+                revision. If no such version exists, return with HTTP status 404.
+            int cache_for: Number of seconds that browsers should be
+                instructed to cache responses
         """
         check_gridfs_arguments(base=base, version=version, cache_for=cache_for)
 
@@ -182,7 +218,24 @@ class Mongo:
         **kwargs
         ) -> ObjectId:
         """
-        Save a file like object to GridFS using the given filename.
+        Save a file-like object to GridFS using the given filename.
+
+        .. code-block:: python
+
+            @app.route("/uploads/<path:filename>", methods=["POST"])
+            async def save_upload(filename):
+                await mongo.save_file(filename, request.files["file"])
+                return redirect(url_for("get_upload", filename=filename))
+
+        Arguments:
+            filename: the filename of the file to return
+            file fileobj: the file-like object to save
+            base: base the base name of the GridFS collections to use
+            content_type: the MIME content-type of the file. If
+                ``None``, the content-type is guessed from the filename using
+                :func:`~mimetypes.guess_type`
+            kwargs: extra attributes to be stored in the file's document,
+            passed directly to :meth:`gridfs.GridFS.put`
         """
         check_gridfs_arguments(
             check_base=True,
