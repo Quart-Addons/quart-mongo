@@ -37,10 +37,7 @@ class BSONObjectIdConverter(BaseConverter):
         Converts a string value to an `ObjectId`.
 
         Parameters:
-            value (``str``): The value to convert.
-
-        Returns:
-            `ObjectId`: Returns this object if passed a vaild id.
+            value: The value to convert.
 
         Raises:
             `HTTPException`: Uses `quart.abort` to raise this exception
@@ -62,7 +59,7 @@ class MongoJSONProvider(DefaultJSONProvider):
     A subclass of `quart.json.provider.DefaultJSONProvider`
     that can handle MongoDB type objects and Odmantic
     Model classes. It can also handle Pydantic type
-    models as well. 
+    models as well, which is for `quart_schema`. 
     """
     def __init__(self, app: Quart) -> None:
         json_options: Optional[JSONOptions] = \
@@ -76,7 +73,7 @@ class MongoJSONProvider(DefaultJSONProvider):
 
     def mongo_json(self, object_: Any) -> Any:
         """
-        Handles Mongo JSON types.
+        Handles JSON serialization for MongoDB.
         """
         if hasattr(object_, "iteritems") or hasattr(object_, "items"):
             return SON((k, self.default(v)) for k, v in iteritems(object_))
@@ -87,9 +84,8 @@ class MongoJSONProvider(DefaultJSONProvider):
 
     def default(self, object_: Any) -> Any:
         """
-        Serialize MongoDB object types using :mod:`bson.json_util`.
-
-        if a `TypeError` is raised will retirn `quart.json.provider._default`.
+        Serialize MongoDB objects and pydantic types as well as the
+        defaults. 
         """
         try:
             return super().default(object_)

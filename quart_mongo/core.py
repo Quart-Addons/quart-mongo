@@ -35,6 +35,14 @@ class Mongo:
     This class is for integrating MongoDB into your `Quart` application. It
     intergrates with MongoDB by using `Motor` and `Odmantic`. It also provides
     a few helper functions for working with MongoDB.
+
+    Arguments:
+        app: The `Quart` application to use. Defaults to ``None``.
+        uri: The MongoDB URI to use. This parameter defaults to ``None``
+            and will then use the app config.
+        json_options: Options for JSON encoding.
+        args: Arguments to pass to `AIOMotorClient` on intialization.
+        kwargs: Extra agrugments to pass to `AIOMotorClient` on intialization.
     """
     def __init__(
             self,
@@ -44,17 +52,6 @@ class Mongo:
             *args,
             **kwargs
             ) -> None:
-        """
-        The constructor of the Mongo class.
-
-        Arguments:
-            app: The `Quart` application to use. Defaults to ``None``.
-            uri: The MongoDB URI to use. This parameter defaults to ``None``
-            and will then use the app config.
-            json_options: Options for JSON encoding.
-            args: Arguments to pass to `AIOMotorClient` on intialization.
-            kwargs: Extra agrugments to pass to `AIOMotorClient` on intialization.
-        """
         self.config: Optional[MongoConfig] = None
         self.cx: Optional[AIOMotorClient] = None
         self.db: Optional[AIOMotorDatabase] = None
@@ -75,13 +72,28 @@ class Mongo:
         This function configures `Mongo` and applies the extension instance
         with the given application.
 
+        It also will get the database name from the URI if it was provided,
+        register the connection function with the app as a before serving
+        function, and register BSON and JSON helpers with the app. 
+
+        Note that BSON and JSON helpers are only added to the app if they
+        have not been. This is in case of multiple instances of this class.
+
+        If you are using `quart_schema` in your application. Make sure you register
+        `quart_schema with the application before this extension. This is so the
+        JSON provider for this extension can be used with the application in lieu 
+        of the one with `quart_schema`.
+
         Parameters:
             app: The application to use.
             uri: The MongoDB URI to use. This parameter defaults to `None`
-            and will then use the app config.
+                and will then use the app config.
+            json_options: Options for JSON encoding.
             args: Arguments to pass to `AIOMotorClient` on intialization.
             kwargs: Extra arguments to pass to `AIOMotorClient` on initialization.
         """
+        app.config.setdefault("QUART_MONGO_JSON_OPTIONS", json_options)
+
         uri = get_uri(app, uri)
         args = tuple([uri] + list(args))
         parsed_uri = uri_parser.parse_uri(uri)
@@ -100,7 +112,7 @@ class Mongo:
         )
 
         # Register before serving function with the app
-        app.before_serving(self._setup_db)
+        app.before_serving(self._connect_db)
 
         # Register helpers with the app.
         # This only needs to happen if they have not already been registered.
@@ -111,12 +123,12 @@ class Mongo:
         if not isinstance(app.json, MongoJSONProvider):
             app.json = MongoJSONProvider(app)
 
-    async def _setup_db(self) -> None:
+    async def _connect_db(self) -> None:
         """
         Before Serving Function (Private)
 
-        This private function is registered with application with the
-        `Mongo.init_app` function and is called by the application before
+        This function is registered with application with the
+        :attr:`~Mongo.init_app` and is called by the application before
         serving any routes.
 
         The purpose of the function is to setup `AIOMotorClient` and also

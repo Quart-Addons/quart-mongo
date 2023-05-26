@@ -15,8 +15,6 @@ class MongoConfig(BaseModel):
     """
     Stores the Mongo Configuration for `quart_mongo.Mongo`.
 
-    This is a subclass to `pydantic.BaseModel`.
-
     Arguments:
         uri: The MongoDB URI.
         database: The database name.
@@ -36,7 +34,7 @@ def get_uri(app: Quart, uri: Optional[str]) -> str:
     This function will set the ``MONGO_URI`` configuration variable
     to ``None`` as default.
 
-    This function is private and should not be called. It is called by
+    This function should not be called. It is called by
     `quart_mongo.Mongo` at creation time to get the MongoDB URI if one
     was not provided dirctly to it.
 

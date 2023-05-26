@@ -20,8 +20,7 @@ from quart_mongo.typing import (
 
 class AIOMotorCollection(motor_asyncio.AsyncIOMotorCollection):
     """
-    Subclass of the `AsyncIOMotorCollection` from Motor with helpers.
-    Sub-class of Motor :class:`~AsyncIOMotorCollection` with helpers.
+    Subclass of the :class:`~motor.motor_asyncio.AsyncIOMotorCollection` with helpers.
     """
     def __init__(
         self,
@@ -33,9 +32,6 @@ class AIOMotorCollection(motor_asyncio.AsyncIOMotorCollection):
         read_concern: Optional[ReadConcern]=None,
         _delegate=None,
     ) -> None:
-        """
-        The constructor of `AIOMotorCollection`.
-        """
         db_class = AIOMotorDatabase
 
         if not isinstance(database, db_class):
@@ -57,7 +53,6 @@ class AIOMotorCollection(motor_asyncio.AsyncIOMotorCollection):
         self.database = database
 
     def __getitem__(self, name: str) -> AIOMotorCollection:
-        """__getitem__."""
         return AIOMotorCollection(
             self.database, self.name + "." + name, _delegate=self.delegate[name]
         )
@@ -89,35 +84,30 @@ class AIOMotorCollection(motor_asyncio.AsyncIOMotorCollection):
 
 class AIOMotorDatabase(motor_asyncio.AsyncIOMotorDatabase):
     """
-    Subclass of `AsyncIOMotorDatabase`.
+    Subclass of :class:`~motor.motor_asyncio.AsyncIOMotorDatabase`.
 
-    Returns instances of Quart-Mongo `quart_mongo.wrappers.AsyncMotorCollection`
-    instead of native Pymongo `motor.motor_asyncio.AsyncIOMotorCollection` when
+    Returns instances :class:`~quart_mongo.wrappers.AsyncMotorCollection`
+    instead of native :class:`~motor.motor_asyncio.AsyncIOMotorCollection` when
     accessed with dot notation.
+
+    Arguments:
+        client: An instance of the Motor client to use to connect to the database.
+        name: The name of the database.
+        kwargs: Extra arguments to be passed to the database.
     """
 
     def __init__(self, client: AIOMotorClient, name: str, **kwargs) -> None:
-        """
-        The constructor of `AIOMotorDatabase`.
-
-        Parameters:
-            client (`AIOMotorClient`): An instance of the Motor client to use to
-            connect to the database.
-            name (``str``): The name of the database.
-            kwargs: Extra arguments to be passed to the database.
-        """
         self._client = client
         delegate = kwargs.get("_delegate") or Database(client.delegate, name, **kwargs)
 
         super(AgnosticBaseProperties, self).__init__(delegate)
 
     def __getitem__(self, name: str) -> AIOMotorCollection:
-        """__getitem__."""
         return AIOMotorCollection(self, name)
 
 class AIOEngine(_AIOEngine):
     """
-    Subclass of the `Odmantic.AIOEngine` object, which is responsible for handling database
+    Subclass of the :class`~Odmantic.AIOEngine` object, which is responsible for handling database
     operations with MongoDB in an asynchronous way using `Motor`.
 
     The purpose of this subclass is to add the function :func::`AIOEngine.find_one_or_404`.
@@ -126,7 +116,7 @@ class AIOEngine(_AIOEngine):
         """
         Find a single document or raise a 404 with the browser.
 
-        This function is like :meth:`AIOEngine.find_one`, but rather than returning
+        This function is like :meth:`~odmantic.AIOEngine.find_one`, but rather than returning
         ``None``. It will raise a 404 error (Not Found HTTP status) on the request.
 
         .. code-block:: python
@@ -137,12 +127,9 @@ class AIOEngine(_AIOEngine):
                     user=user)
 
         Parameters:
-            model (``Model``): The `Odmantic.Model` to use to find the model.
-            args: Arguments to pass to `AIOEngine.find_one`.
-            kwargs: Extra arguments to pass to `AIOEngine.find_one`.
-
-        Returns:
-            ``Model``
+            model: The :class:`~Odmantic.Model` to use to find the model.
+            args: Arguments to pass to :class:`~odmantic.AIOEngine.find_one`.
+            kwargs: Extra arguments to pass to :class:`~odmantic.AIOEngine.find_one`.
 
         Raises:
             ``HTTPException``: Uses `quart.abort` to raises this exception if
@@ -158,25 +145,29 @@ class AIOEngine(_AIOEngine):
 
 class AIOMotorClient(motor_asyncio.AsyncIOMotorClient):
     """
-    Subclass of `motor_asyncio.AsyncIOMotorDatabase`.
+    Subclass of :class:`~motor.motor_asyncio.AsyncIOMotorClient`.
 
-    Returns instances of Quart-Mongo `quart_mongo.wrappers.AsyncMotorClient`
-    instead of native Pymongo `motor.motor_asyncio.AsyncIOMotorClient` when
-    accessed with dot notation.
+    Returns instances of Quart-Mongo
+    :class:`~quart_mongo.wrappers.AIOMotorDatabase` instead of native
+    :class:`~motor.motor_asyncio.AIOMotorDatabase`. 
+    :class:`~quart_mongo.wrappers.AIOEngine` instead of native
+    :class:`~odmantinc.AIOEngine`.
     """
 
     def __getitem__(self, name: str) -> AIOMotorDatabase:
-        """__getitem__."""
+        """
+        Returns an instance of :class:`~quart_mongo.wrappers.AIOMotorDatabase`.
+        """
         return AIOMotorDatabase(self, name)
 
     def motor(self, name: str) -> AIOMotorDatabase:
         """
-        Returns an instnace of `AIOMotorDatabase`.
+        Returns an instance of :class:`~quart_mongo.wrappers.AIOMotorDatabase`.
         """
         return AIOMotorDatabase(self, name)
 
     def odm(self, name: str) -> AIOEngine:
         """
-        Returns an instance of `AIOEngine`.
+        Returns an instance of :class:`~quart_mongo.wrappers.AIOEngine`.
         """
         return AIOEngine(self, name)
