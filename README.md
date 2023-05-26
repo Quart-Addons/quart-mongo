@@ -32,4 +32,4 @@ The documentation for Quart-Mongo and is available [here][docs].
 [Motor]: https://motor.readthedocs.io/en/stable/>
 [Odmantic]: https://art049.github.io/odmantic/
 [Quart-Schema]: https://github.com/pgjones/quart-schema
-[docs]: https://quart-babel.readthedocs.io
+[docs]: [https://quart-babel.readthedocs.io](https://quart-mongo.readthedocs.io/en/latest/)
