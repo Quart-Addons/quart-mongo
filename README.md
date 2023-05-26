@@ -4,6 +4,8 @@
 
 Quart-Mongo bridges [Quart][], [Motor][], and [Odmantic][] to create a powerful MongoDB extension to use in your Quart applications. It also provides some convenience helpers as well as being able to work with [Quart-Schema][].
 
+![Quart Plug Mongo](logos/quart_mongo.png)
+
 # Installation 
 
 Install the extension with the following command:
@@ -24,7 +26,7 @@ object back to here. Do so like this:
 
 # Documentation
 
-The for Quart-Babel and is available [here][docs].
+The documentation for Quart-Mongo and is available [here][docs].
 
 [Quart]: https://quart.palletsprojects.com/en/latest/>
 [Motor]: https://motor.readthedocs.io/en/stable/>
