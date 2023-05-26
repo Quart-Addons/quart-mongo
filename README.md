@@ -26,10 +26,9 @@ object back to here. Do so like this:
 
 # Documentation
 
-The documentation for Quart-Mongo and is available [here](docs).
+The documentation for Quart-Mongo and is available [here]([docs](https://quart-mongo.readthedocs.io/en/latest/).
 
 [Quart]: https://quart.palletsprojects.com/en/latest/>
 [Motor]: https://motor.readthedocs.io/en/stable/>
 [Odmantic]: https://art049.github.io/odmantic/
 [Quart-Schema]: https://github.com/pgjones/quart-schema
-[docs]: [https://quart-babel.readthedocs.io](https://quart-mongo.readthedocs.io/en/latest/)
