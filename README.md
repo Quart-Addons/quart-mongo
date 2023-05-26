@@ -21,7 +21,7 @@ object back to here. Do so like this:
     from quart_mongo import Mongo
 
     app = Quart(__name__)
-    babel = Mongo(app)
+    mongo = Mongo(app)
 
 
 # Documentation
