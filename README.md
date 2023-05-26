@@ -1,15 +1,33 @@
-# Quart Extension Repository Template
-This repoistory is used as a template to build new Quart extensions
-using VS Code, Dev Containers, and Poetry. 
+# Quart Mongo
 
-The container is created and then there is a shell script which will 
-look for a pyproject.toml file. If the file exists, the script will 
-then run `poetry install`. If it does not exist it will tell you there
-is no file. It is assumed that this file is it a the root of the project
-directory. 
+![Quart Mongo Logo](logos/logo.png)
 
-When first creating your project. Run `poetry init` to create your 
-pyproject.toml file. Then rebuild the development container to install 
-your required dependicies for your project.
+Quart-Mongo bridges [Quart][], [Motor][], and [Odmantic][] to create a powerful MongoDB extension to use in your Quart applications. It also provides some convenience helpers as well as being able to work with [Quart-Schema][].
 
-It also has some common used directories and files as templates for the new extension. 
+# Installation 
+
+Install the extension with the following command:
+
+    $ pip3 install quart-babel
+
+# Usage
+
+To use the extension simply import the class wrapper and pass the Quart app 
+object back to here. Do so like this:
+
+    from quart import Quart
+    from quart_mongo import Mongo
+
+    app = Quart(__name__)
+    babel = Mongo(app)
+
+
+# Documentation
+
+The for Quart-Babel and is available [here][docs].
+
+[Quart]: https://quart.palletsprojects.com/en/latest/>
+[Motor]: https://motor.readthedocs.io/en/stable/>
+[Odmantic]: https://art049.github.io/odmantic/
+[Quart-Schema]: https://github.com/pgjones/quart-schema
+[docs]: https://quart-babel.readthedocs.io
