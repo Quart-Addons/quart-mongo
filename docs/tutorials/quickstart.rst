@@ -1,5 +1,5 @@
 Quickstart
-----------
+==========
 
 Add a :class:`~quart_mongo.Mongo` to your code:
 
@@ -30,3 +30,36 @@ You can use :attr:`~quart_mongo.Mongo.db` directly in views:
 
     If there is no database name, the :attr:`~quart_mongo.Mongo.db`
     attribute will be ``None``.
+
+If you wish to use Odmantic models to insert, get, update, and delete
+collections. Then the database will also be exposed as the
+:attr:`~quart_mongo.Mongo.odm` attribute.
+
+You can also use :attr:`~quart_mongo.Mongo.odm` directly in views:
+
+.. code-block:: python
+    from odmaintic import Model
+
+    class User(Model):
+        name: str
+        online: bool
+    
+    @app.route("/")
+    async def home_page():
+        online_users_db = await mongo.odm.find(User, User.online == True)
+
+        # online users will be a list of `User` classes. If you wish
+        # to pass to the template. You need to convert the classes
+        # to a list of dictionaries. 
+        online_users = []
+
+        for user in online_users_db:
+            online_users.append(user.doc())
+
+        return await render_template("index.html",
+            online_users=online_users)
+
+.. note::
+
+    If there is no database name, the :attr:`~quart_mongo.Mongo.odm`
+    attribute will be ``None`` just like `~quart_mongo.Mongo.db`.

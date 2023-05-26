@@ -7,8 +7,8 @@
    :alt: Quart Mongo
    :align: right
 
-Introduction
-------------
+Quart-Mongo
+-----------
 
 `MongoDB <http://www.mongodb.org/>`_ is an open source database that stores flexible JSON-like "documents," which can have any number,
 name, or hierarchy of fields within, instead of rows of data as in a relational database. Python developers can think of MongoDB as a 
@@ -17,7 +17,7 @@ represents MongoDB documents).
 
 Quart-Mongo bridges `Quart <https://quart.palletsprojects.com/en/latest/>`_, `Motor <https://motor.readthedocs.io/en/stable/>`_, 
 and `Odmantic <https://art049.github.io/odmantic/>`_ to create a powerful MongoDB extension to use in your applications. It also 
-provides some convenience helpers as well as being quarable to work `Quart-Schema <https://quart-schema.readthedocs.io/en/latest/>`_.
+provides some convenience helpers as well as being able to work with `Quart-Schema <https://quart-schema.readthedocs.io/en/latest/>`_.
 
 Quart-Mongo is developed on Github, `here <https://github.com/Quart-Addons/quart-mongo>`_
 

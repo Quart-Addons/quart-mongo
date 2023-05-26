@@ -1,10 +1,10 @@
-====
 Core
 ====
 
 .. autoclass:: quart_mongo.Mongo
     :members:
-
+    :private-members:
+    
     .. attribute:: cx
 
         The :class::`~quart_mongo.wrappers.AIOMotorClient` connected to

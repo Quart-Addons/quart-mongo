@@ -1,11 +1,13 @@
-=====
 Motor
 =====
 
-Quart-Mongo uses Motor for general MongoDB connections.
+Quart-Mongo uses `Motor <https://motor.readthedocs.io/en/stable/index.html>`_ 
+for general MongoDB connections.
 
 Connection
 -----------
+
+.. _motor connection:
 
 The :attribute:`~quart_mongo.Mongo.cx` will be an instance of 
 :class:`~quart_mongo.wrappers.AsyncIOMotorClient` if the URI was passed
@@ -15,6 +17,8 @@ Refer to `Configuration`_ for additional information.
 Database
 --------
 
+.. _motor database:
+
 The :attribute:`~quart_mongo.Mongo.db` will be an instance of 
 :class:`~quart_mongo.wrappers.AIOMotorDatabase` if the database
 name was passed with the URI. If it was not, you will need to set
@@ -23,7 +27,10 @@ the database manually like so:
 .. code-block:: python
 
     mongo = Mongo(app)
-    mongo.db = self.cx['test-database']
+    mongo.db = mongo.cx['test-database']
+    
+    # or
+    mongo.db = mongo.cx.engine('test-database')
 
 Getting a Collection
 --------------------
