@@ -8,7 +8,7 @@ Quart-Mongo bridges [Quart][], [Motor][], and [Odmantic][] to create a powerful 
 
 Install the extension with the following command:
 
-    $ pip3 install quart-babel
+    $ pip3 install quart-mongo
 
 # Usage
 
