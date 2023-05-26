@@ -14,7 +14,7 @@ from motor.motor_asyncio import AsyncIOMotorGridFSBucket
 from pymongo import uri_parser
 from quart import Quart, abort, Response
 
-from .config import MongoConfig, _get_uri
+from .config import MongoConfig, get_uri
 from .helpers import BSONObjectIdConverter, MongoJSONProvider
 
 from .utils import (
@@ -82,7 +82,7 @@ class Mongo:
             args: Arguments to pass to `AIOMotorClient` on intialization.
             kwargs: Extra arguments to pass to `AIOMotorClient` on initialization.
         """
-        uri = _get_uri(app, uri)
+        uri = get_uri(app, uri)
         args = tuple([uri] + list(args))
         parsed_uri = uri_parser.parse_uri(uri)
         database_name = parsed_uri["database"] or None

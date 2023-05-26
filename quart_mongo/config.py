@@ -28,7 +28,7 @@ class MongoConfig(BaseModel):
     args: Optional[Tuple[Any]]
     kwargs: Optional[Dict[str, Any]]
 
-def _get_uri(app: Quart, uri: Optional[str]) -> str:
+def get_uri(app: Quart, uri: Optional[str]) -> str:
     """
     Gets the MongoDB URI from the app configuration.
 
