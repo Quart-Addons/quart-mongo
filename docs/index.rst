@@ -26,6 +26,10 @@ This extension is heavily influenced on the following:
 * `Flask-Pymongo <https://github.com/dcrosta/flask-pymongo>`_
 * `Quart-Motor <https://github.com/marirs/quart-motor/>`_ 
 
+.. image:: _static/quart_mongo.png
+   :alt: Quart plus Mongo
+   :align: center 
+
 Tutorials
 ---------
 
