@@ -70,7 +70,7 @@ pytest = "*"
 pytest-asyncio = "*"
 quart-schema = "*"
 sphinx = "*"
-pydata_sphinx_theme = { version = "*", optional = true }
+pydata_sphinx_theme = "*"
 
 [build-system]
 requires = ["poetry-core"]
