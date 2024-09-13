@@ -126,7 +126,7 @@ async def test_sets_content_length(uri: str) -> None:
 
     async with app.test_request_context("/"):
         resp = await mongo.send_file_by_name("myfile.txt")
-        assert resp.content_length == len(fileobj.getbuffer())
+        assert resp.content_length == len(fileobj.getvalue())
     await teardown(mongo)
 
 

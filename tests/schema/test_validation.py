@@ -6,7 +6,6 @@ from typing import Any
 import pytest
 from odmantic import Model
 from quart import Quart, websocket
-from quart.typing import ResponseReturnValue
 from quart.views import View
 
 from quart_schema import (
@@ -22,13 +21,16 @@ from quart_mongo import Mongo
 
 from tests.odmantic.models import Things
 
+
 class Invalid(Model):
     name: str
+
 
 VALID_DICT = {"id": "Hello", "val": "World"}
 INVALID_DICT = {"name": "bob"}
 VALID = Things(id="Hello", val="World")
 INVALID = Invalid(name="bob")
+
 
 @pytest.mark.parametrize(
     "json, status",
@@ -55,6 +57,7 @@ async def test_request_validation(uri: str, json: dict, status: int) -> None:
     response = await client.post("/", json=json)
     assert response.status_code == status
 
+
 @pytest.mark.parametrize(
     "data, status",
     [
@@ -63,7 +66,9 @@ async def test_request_validation(uri: str, json: dict, status: int) -> None:
     ],
 )
 @pytest.mark.asyncio
-async def test_request_form_validation(uri: str, data: dict, status: int) -> None:
+async def test_request_form_validation(
+    uri: str, data: dict, status: int
+) -> None:
     """
     Tests request form validation.
     """
@@ -80,6 +85,7 @@ async def test_request_form_validation(uri: str, data: dict, status: int) -> Non
     response = await client.post("/", form=data)
     assert response.status_code == status
 
+
 @pytest.mark.parametrize(
         "return_value, status",
         [
@@ -90,7 +96,9 @@ async def test_request_form_validation(uri: str, data: dict, status: int) -> Non
         ],
 )
 @pytest.mark.asyncio
-async def test_response_validation(uri: str, return_value: Any, status: int) -> None:
+async def test_response_validation(
+    uri: str, return_value: Any, status: int
+) -> None:
     """
     Tests response validation.
     """
@@ -107,6 +115,7 @@ async def test_response_validation(uri: str, return_value: Any, status: int) -> 
     response = await client.get("/")
     assert response.status_code == status
 
+
 @pytest.mark.parametrize(
     "return_value, status",
     [
@@ -115,7 +124,9 @@ async def test_response_validation(uri: str, return_value: Any, status: int) -> 
     ],
 )
 @pytest.mark.asyncio
-async def test_view_response_validation(uri: str, return_value: Any, status: int) -> None:
+async def test_view_response_validation(
+    uri: str, return_value: Any, status: int
+) -> None:
     """
     Tests view response validation.
     """
@@ -136,6 +147,7 @@ async def test_view_response_validation(uri: str, return_value: Any, status: int
     response = await client.get("/")
     assert response.status_code == status
 
+
 @pytest.mark.asyncio
 async def test_websocket_validation(uri: str) -> None:
     """
@@ -147,13 +159,13 @@ async def test_websocket_validation(uri: str) -> None:
 
     @app.websocket("/ws")
     async def ws() -> None:
-        await websocket.reeive_as(Things)
+        await websocket.receive_as(Things)
         with pytest.raises(SchemaValidationError):
             await websocket.receive_as(Things)
         await websocket.send_as(VALID_DICT, Things)
         with pytest.raises(SchemaValidationError):
             await websocket.send_as(VALID_DICT, Invalid)
-    
+
     client = app.test_client()
     async with client.websocket("/ws") as test_websocket:
         await test_websocket.send_json(VALID_DICT)

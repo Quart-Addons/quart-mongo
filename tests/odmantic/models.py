@@ -1,7 +1,8 @@
 """
-Odmantic models for testing.
+tests.odmantic.models
 """
 from odmantic import Field, Model
+
 
 class Things(Model):
     """
@@ -9,6 +10,7 @@ class Things(Model):
     """
     id: str = Field(primary_field=True)
     val: str
+
 
 class InvalidModel(object):
     """

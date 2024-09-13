@@ -14,12 +14,14 @@ from quart_schema import (
 
 from quart_mongo import Mongo
 
+
 class Data(Model):
     """
     Test data model.
     """
     id: str = Field(primary_field=True)
     snake_case: str
+
 
 @pytest.mark.asyncio
 async def test_request_casing(uri: str) -> None:
@@ -33,11 +35,15 @@ async def test_request_casing(uri: str) -> None:
     @app.route("/", methods=["POST"])
     @validate_request(Data)
     async def index(data: Data) -> ResponseReturnValue:
-        return str(data.doc())
+        return str(data.model_dump_doc())
 
     client = app.test_client()
-    response = await client.post("/", json={"id": "Hello", "snakeCase": "World"})
-    assert await response.get_data(as_text=True) == "{'_id': 'Hello', 'snake_case': 'World'}"
+    response = await client.post(
+        "/", json={"id": "Hello", "snakeCase": "World"}
+        )
+    assert await response.get_data(as_text=True) == \
+        "{'_id': 'Hello', 'snake_case': 'World'}"
+
 
 @pytest.mark.asyncio
 async def test_response_casing(uri: str) -> None:
@@ -50,9 +56,10 @@ async def test_response_casing(uri: str) -> None:
 
     @app.route("/", methods=["GET"])
     @validate_response(Data)
-    async def index() -> ResponseReturnValue:
+    async def index() -> Data:
         return Data(id="Hello", snake_case="World")
 
     client = app.test_client()
     response = await client.get("/")
-    assert await response.get_data(as_text=True) == '{"id":"Hello","snakeCase":"World"}'
+    assert await response.get_data(as_text=True) == \
+        '{"id":"Hello","snakeCase":"World"}\n'

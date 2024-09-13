@@ -1,6 +1,5 @@
 """
-Tests Odmantic specific connections
-using the extension.
+tests.odmantic.test.connection
 """
 import pytest
 
@@ -11,6 +10,7 @@ from quart_mongo.wrappers import AIOEngine
 from tests.utils import teardown
 
 from .models import Things
+
 
 @pytest.mark.asyncio
 async def test_odmantic_database_success(uri: str) -> None:
@@ -24,6 +24,7 @@ async def test_odmantic_database_success(uri: str) -> None:
     assert isinstance(mongo.odm, AIOEngine)
     await teardown(mongo)
 
+
 @pytest.mark.asyncio
 async def test_odmantic_no_database_name_in_uri(client_uri: str) -> None:
     """
@@ -33,6 +34,7 @@ async def test_odmantic_no_database_name_in_uri(client_uri: str) -> None:
     mongo = Mongo(app, client_uri)
     await app.startup()
     assert mongo.odm is None
+
 
 @pytest.mark.asyncio
 async def test_odmantic_setter(client_uri: str) -> None:
@@ -49,6 +51,7 @@ async def test_odmantic_setter(client_uri: str) -> None:
     assert isinstance(mongo.odm, AIOEngine)
     await teardown(mongo, database=db_name)
 
+
 @pytest.mark.asyncio
 async def test_multiple_odmantic_db_connections(client_uri: str) -> None:
     """
@@ -62,6 +65,7 @@ async def test_multiple_odmantic_db_connections(client_uri: str) -> None:
     assert isinstance(db2.odm, AIOEngine)
     await teardown(db1)
     await teardown(db2)
+
 
 @pytest.mark.asyncio
 async def test_odmantic_model(uri: str) -> None:

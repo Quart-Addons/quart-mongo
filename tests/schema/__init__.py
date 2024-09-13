@@ -1,3 +1,3 @@
 """
-Tests quart_schema using Odmantic Models.
+tests.schema
 """

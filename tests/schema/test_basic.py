@@ -1,5 +1,5 @@
 """
-Tests basic function for quart_schema.
+tests.schema.test_basic
 """
 from pathlib import Path
 from uuid import UUID
@@ -8,10 +8,11 @@ import pytest
 from bson import ObjectId
 from odmantic import Model
 from quart import Quart
-from quart_schema import QuartSchema, ResponseReturnValue
+from quart_schema import QuartSchema
 from quart_mongo import Mongo
 
 from tests.odmantic.models import Things
+
 
 @pytest.mark.asyncio
 async def test_make_response(uri: str) -> None:
@@ -23,7 +24,7 @@ async def test_make_response(uri: str) -> None:
     Mongo(app, uri)
 
     @app.route("/")
-    async def index() -> ResponseReturnValue:
+    async def index() -> Things:
         return Things(id="foo", val="bar")
 
     client = app.test_client()
@@ -32,8 +33,12 @@ async def test_make_response(uri: str) -> None:
 
 
 class OdmanticEncoded(Model):
+    """
+    Model for testing.
+    """
     a: UUID
     b: Path
+
 
 @pytest.mark.asyncio
 async def test_make_odmantic_encoder_response(uri: str) -> None:
@@ -49,8 +54,15 @@ async def test_make_odmantic_encoder_response(uri: str) -> None:
 
     @app.route("/")
     async def index() -> OdmanticEncoded:
-        return OdmanticEncoded(a=UUID("23ef2e02-1c20-49de-b05e-e9fe2431c474"), b=Path("/"), id=id)
+        return OdmanticEncoded(
+            a=UUID("23ef2e02-1c20-49de-b05e-e9fe2431c474"), b=Path("/"), id=id
+            )
 
     client = app.test_client()
     response = await client.get("/")
-    assert (await response.get_json()) == {"a": "23ef2e02-1c20-49de-b05e-e9fe2431c474", "b": "/", "id": {"$oid": "5cf29abb5167a14c9e6e12c4"}}
+    assert (await response.get_json()) == \
+        {
+            "a": "23ef2e02-1c20-49de-b05e-e9fe2431c474",
+            "b": "/",
+            "id": {"$oid": "5cf29abb5167a14c9e6e12c4"}
+            }
