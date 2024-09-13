@@ -83,7 +83,8 @@ class MongoJSONProvider(DefaultJSONProvider):
         """
         if hasattr(object_, "iteritems") or hasattr(object_, "items"):
             return SON((k, self.default(v)) for k, v in iteritems(object_))
-        elif hasattr(object_, "__iter__") and not isinstance(object_, string_types):
+        elif hasattr(object_, "__iter__") and \
+                not isinstance(object_, string_types):
             return [self.default(v) for v in object_]
         else:
             return json_util.default(object_, **self._default_kwargs)

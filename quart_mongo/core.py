@@ -6,13 +6,14 @@ The extension for Quart Mongo.
 from __future__ import annotations
 from inspect import isawaitable
 import mimetypes
-from typing import Any, AnyStr, Optional, TYPE_CHECKING
+from typing import Any, Optional, Tuple, Unpack
 
 from bson import ObjectId
 from gridfs import NoFile
 from motor.motor_asyncio import AsyncIOMotorGridFSBucket
 from pymongo import uri_parser
 from quart import Quart, abort, Response
+from quart.datastructures import FileStorage
 
 from .config import MongoConfig, get_uri
 from .helpers import BSONObjectIdConverter, MongoJSONProvider
@@ -25,9 +26,6 @@ from .utils import (
 
 from .wrappers import AIOMotorClient, AIOMotorDatabase, AIOEngine
 from .typing import JSONOptions
-
-if TYPE_CHECKING:
-    from _typeshed import SupportsRead
 
 
 class Mongo:
@@ -49,9 +47,9 @@ class Mongo:
             app: Optional[Quart] = None,
             uri: Optional[str] = None,
             json_options: Optional[JSONOptions] = None,
-            *args: Any,
+            *args: Unpack[Tuple[int, Any]],
             **kwargs: Any
-            ) -> None:
+    ) -> None:
         self.config: Optional[MongoConfig] = None
         self.cx: Optional[AIOMotorClient] = None
         self.db: Optional[AIOMotorDatabase] = None
@@ -65,9 +63,9 @@ class Mongo:
             app: Quart,
             uri: Optional[str] = None,
             json_options: Optional[JSONOptions] = None,
-            *args: Any,
+            *args: Unpack[Tuple[int, Any]],
             **kwargs: Any
-            ) -> None:
+    ) -> None:
         """
         This function configures `Mongo` and applies the extension instance
         with the given application.
@@ -103,7 +101,7 @@ class Mongo:
         # Try to delay connecting, in case the app is loaded
         # before forking per:
         # https://pymongo.readthedocs.io/en/stable/faq.html#is-pymongo-fork-safe
-        kwargs.setdefault("connect", False)
+        kwargs['connect'] = False
 
         # Set the configuration for this instance.
         self.config = MongoConfig(
@@ -230,7 +228,7 @@ class Mongo:
     async def save_file(
         self,
         filename: str,
-        fileobj: SupportsRead[AnyStr],
+        fileobj: FileStorage,
         base: str = "fs",
         content_type: Optional[str] = None,
         **kwargs: Any
@@ -272,7 +270,8 @@ class Mongo:
         content_type = metadata.setdefault('contentType', content_type)
 
         if content_type is None:
-            metadata['contentType'] = mimetypes.guess_type(filename)[0]
+            content_type = mimetypes.guess_type(filename)
+            metadata['contentType'] = content_type[0]
 
         storage = AsyncIOMotorGridFSBucket(self.db, bucket_name=base)
 

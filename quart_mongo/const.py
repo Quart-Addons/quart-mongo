@@ -1,8 +1,5 @@
 """
 quart_mongo.const
-
-Constant strings and variables to use with
-Quart-Mongo.
 """
 import pymongo
 
