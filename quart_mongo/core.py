@@ -147,7 +147,7 @@ class Mongo:
         self,
         filename: str,
         base: str = "fs",
-        version: int = -1,
+        revision: int = -1,
         cache_for: int = 31536000
     ) -> Response:
         """
@@ -165,20 +165,20 @@ class Mongo:
         Arguments:
             filename: The filename of the file to return
             base: The base name of the GridFS collections to use
-            version: If positive, return the Nth revision of the file
-                identified by filename; if negative, return the Nth most recent
-                revision. If no such version exists, return with HTTP status
-                404.
+            revision: Which revisions of the file to retrieve.
+                Defaults to -1 (most recent).
             int cache_for: Number of seconds that browsers should be
                 instructed to cache responses
         """
-        check_gridfs_arguments(base=base, version=version, cache_for=cache_for)
+        check_gridfs_arguments(
+            base=base, version=revision, cache_for=cache_for
+            )
 
         storage = AsyncIOMotorGridFSBucket(self.db, bucket_name=base)
 
         try:
             grid_out = await storage.open_download_stream_by_name(
-                filename, version
+                filename, revision=revision
                 )
         except NoFile:
             abort(404)
