@@ -6,12 +6,16 @@
     "python.testing.pytestEnabled": true,
     "cSpell.words": [
         "_typeshed",
+        "autopep",
         "bson",
         "GRIDFS",
         "Invaild",
+        "isort",
+        "mypy",
         "Odmantic",
         "odmantinc",
         "pydantic",
+        "pylint",
         "pymongo"
     ]
 }
