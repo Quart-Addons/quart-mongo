@@ -136,7 +136,7 @@ class AIOEngine(_AIOEngine):
             *queries: Union[
                 QueryExpression, Dict, bool
             ],
-            sort: Optional[Any],
+            sort: Optional[Any] = None,
             session: Optional[Any] = None
     ) -> Model:
         """
