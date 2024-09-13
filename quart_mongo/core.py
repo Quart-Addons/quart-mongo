@@ -6,14 +6,13 @@ The extension for Quart Mongo.
 from __future__ import annotations
 from inspect import isawaitable
 import mimetypes
-from typing import Any, Optional, Tuple, Unpack
+from typing import Any, AnyStr, Optional, Tuple, Unpack, TYPE_CHECKING
 
 from bson import ObjectId
 from gridfs import NoFile
 from motor.motor_asyncio import AsyncIOMotorGridFSBucket
 from pymongo import uri_parser
 from quart import Quart, abort, Response
-from quart.datastructures import FileStorage
 
 from .config import MongoConfig, get_uri
 from .helpers import BSONObjectIdConverter, MongoJSONProvider
@@ -26,6 +25,9 @@ from .utils import (
 
 from .wrappers import AIOMotorClient, AIOMotorDatabase, AIOEngine
 from .typing import JSONOptions
+
+if TYPE_CHECKING:
+    from _typeshed import SupportsRead
 
 
 class Mongo:
@@ -47,25 +49,22 @@ class Mongo:
             app: Optional[Quart] = None,
             uri: Optional[str] = None,
             json_options: Optional[JSONOptions] = None,
-            *args: Unpack[Tuple[int, Any]],
+            *args: Unpack[Tuple[Any]],
             **kwargs: Any
     ) -> None:
+        self.uri = uri
+        self.json_options = json_options
+        self.args = args
+        self.kwargs = kwargs
         self.config: Optional[MongoConfig] = None
         self.cx: Optional[AIOMotorClient] = None
         self.db: Optional[AIOMotorDatabase] = None
         self.odm: Optional[AIOEngine] = None
 
         if app is not None:
-            self.init_app(app, uri, json_options, *args, **kwargs)
+            self.init_app(app)
 
-    def init_app(
-            self,
-            app: Quart,
-            uri: Optional[str] = None,
-            json_options: Optional[JSONOptions] = None,
-            *args: Unpack[Tuple[int, Any]],
-            **kwargs: Any
-    ) -> None:
+    def init_app(self, app: Quart) -> None:
         """
         This function configures `Mongo` and applies the extension instance
         with the given application.
@@ -91,25 +90,17 @@ class Mongo:
             kwargs: Extra arguments to pass to `AIOMotorClient` on
                 initialization.
         """
-        app.config.setdefault("QUART_MONGO_JSON_OPTIONS", json_options)
+        app.config.setdefault("QUART_MONGO_JSON_OPTIONS", self.json_options)
 
-        uri = get_uri(app, uri)
-        args = tuple([uri] + list(args))
-        parsed_uri = uri_parser.parse_uri(uri)
-        database_name = parsed_uri["database"] or None
+        uri = get_uri(app, self.uri)
+        self.args = tuple([uri] + list(self.args))
+        parsed_uri = uri_parser.parse_uri(self.uri)
+        self.database_name = parsed_uri["database"] or None
 
         # Try to delay connecting, in case the app is loaded
         # before forking per:
         # https://pymongo.readthedocs.io/en/stable/faq.html#is-pymongo-fork-safe
-        kwargs['connect'] = False
-
-        # Set the configuration for this instance.
-        self.config = MongoConfig(
-            uri=uri,
-            database=database_name,
-            args=args,
-            kwargs=kwargs
-        )
+        self.kwargs['connect'] = False
 
         # Register before serving function with the app
         app.before_serving(self._connect_db)
@@ -135,7 +126,7 @@ class Mongo:
         `AIOMotorDatabase` and `AIOEngine` if the MongoDB URI provides the
         database name.
         """
-        self.cx = AIOMotorClient(*self.config.args, **self.config.kwargs)
+        self.cx = AIOMotorClient(*self.args, **self.kwargs)
 
         if self.config.database:
             self.db = self.cx.motor(self.config.database)
@@ -228,7 +219,7 @@ class Mongo:
     async def save_file(
         self,
         filename: str,
-        fileobj: FileStorage,
+        fileobj: SupportsRead[AnyStr],
         base: str = "fs",
         content_type: Optional[str] = None,
         **kwargs: Any
