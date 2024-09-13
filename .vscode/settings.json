@@ -11,11 +11,17 @@
         "GRIDFS",
         "Invaild",
         "isort",
+        "jsonify",
         "mypy",
         "Odmantic",
         "odmantinc",
         "pydantic",
         "pylint",
-        "pymongo"
+        "pymongo",
+        "werkzeug"
+    ],
+    "cSpell.ignoreWords": [
+        "doesnt",
+        "gridfile"
     ]
 }
