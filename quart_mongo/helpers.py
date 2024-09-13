@@ -15,6 +15,7 @@ from werkzeug.routing import BaseConverter
 
 from .typing import JSONOptions
 
+
 class BSONObjectIdConverter(BaseConverter):
     """
     A simple converter for the RESTful URL routing system of Quart.
@@ -26,10 +27,14 @@ class BSONObjectIdConverter(BaseConverter):
             return await render_template("task.html", task=task)
 
     Valid object ID strings are converted into :class:`bson.objectid.ObjectId`
-    objects; invalid strings result in a 404 error. The converter is automatically
-    registered by the initialization of :class:`~quart_mongo.Mongo` with keyword
-    :attr:`ObjectId`. The :class:`~quart_mongo.helpers.BSONObjectIdConverter` is
-    automatically installed on the :class:`~quart_mongo.Mongo` instance at creation
+    objects; invalid strings result in a 404 error.
+
+    The converter is automatically registered by the initialization of
+    :class:`~quart_mongo.Mongo` with keyword :attr:`ObjectId`.
+
+    The :class:`~quart_mongo.helpers.BSONObjectIdConverter`
+    is automatically installed on the
+    :class:`~quart_mongo.Mongo` instance at creation
     time.
     """
     def to_python(self, value: str) -> ObjectId:
@@ -54,12 +59,13 @@ class BSONObjectIdConverter(BaseConverter):
         """
         return str(value)
 
+
 class MongoJSONProvider(DefaultJSONProvider):
     """
     A subclass of `quart.json.provider.DefaultJSONProvider`
     that can handle MongoDB type objects and Odmantic
     Model classes. It can also handle Pydantic type
-    models as well, which is for `quart_schema`. 
+    models as well, which is for `quart_schema`.
     """
     def __init__(self, app: Quart) -> None:
         json_options: Optional[JSONOptions] = \
@@ -85,7 +91,7 @@ class MongoJSONProvider(DefaultJSONProvider):
     def default(self, object_: Any) -> Any:
         """
         Serialize MongoDB objects and pydantic types as well as the
-        defaults. 
+        defaults.
         """
         try:
             return super().default(object_)

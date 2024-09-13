@@ -2,7 +2,7 @@
 quart_mongo.utils
 """
 from __future__ import annotations
-from typing import AnyStr, Optional, TYPE_CHECKING
+from typing import Any, AnyStr, Optional, TYPE_CHECKING
 
 from motor.motor_asyncio import AsyncIOMotorGridOut
 from quart import Response, send_file
@@ -17,6 +17,7 @@ from .const import (
 if TYPE_CHECKING:
     from _typeshed import SupportsRead
 
+
 def check_file_object(fileobj: SupportsRead[AnyStr]) -> None:
     """
     Checks if a file object has a read method. If not raises
@@ -25,6 +26,7 @@ def check_file_object(fileobj: SupportsRead[AnyStr]) -> None:
     if not (hasattr(fileobj, "read") and callable(fileobj.read)):
         raise TypeError(GRIDFS_FILEOBJ)
 
+
 def check_gridfs_arguments(
     check_base: bool = True,
     base: Optional[str] = None,
@@ -32,9 +34,9 @@ def check_gridfs_arguments(
     version: Optional[int] = None,
     check_cache_for: bool = True,
     cache_for: Optional[int] = None,
-    ) -> None:
+) -> None:
     """
-    Check if GridFS arguments are the correct type. If not will raise a 
+    Check if GridFS arguments are the correct type. If not will raise a
     `TypeError`.
     """
     if check_base:
@@ -49,6 +51,7 @@ def check_gridfs_arguments(
         if not isinstance(cache_for, int):
             raise TypeError(GRIDFS_CACHE)
 
+
 async def create_response(
         grid_out: AsyncIOMotorGridOut,
         filename: Optional[str] = None,
@@ -57,7 +60,7 @@ async def create_response(
     """
     Create as response using `Quart.send_file`.
     """
-    file_obj = await grid_out.read()
+    file_obj: Any = await grid_out.read()
     mimetype = grid_out.metadata["contentType"]
     last_modified = grid_out.upload_date
 

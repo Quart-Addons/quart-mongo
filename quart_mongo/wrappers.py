@@ -2,10 +2,11 @@
 quart_mongo.wrappers
 """
 from __future__ import annotations
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 from motor import motor_asyncio
 from odmantic import AIOEngine as _AIOEngine, Model
+from odmantic.engine import ModelType
 from pymongo.collection import Collection
 from pymongo.database import Database
 from quart import abort
@@ -18,19 +19,21 @@ from quart_mongo.typing import (
     WriteConcern
 )
 
+
 class AIOMotorCollection(motor_asyncio.AsyncIOMotorCollection):
     """
-    Subclass of the :class:`~motor.motor_asyncio.AsyncIOMotorCollection` with helpers.
+    Subclass of the :class:`~motor.motor_asyncio.AsyncIOMotorCollection`
+    with helpers.
     """
     def __init__(
         self,
         database: AIOMotorDatabase,
         name: str,
-        codec_options: Optional[CodecOptions]=None,
-        read_preference: Optional[ServerMode]=None,
-        write_concern: Optional[WriteConcern]=None,
-        read_concern: Optional[ReadConcern]=None,
-        _delegate=None,
+        codec_options: Optional[CodecOptions] = None,
+        read_preference: Optional[ServerMode] = None,
+        write_concern: Optional[WriteConcern] = None,
+        read_concern: Optional[ReadConcern] = None,
+        _delegate: Optional[Any] = None,
     ) -> None:
         db_class = AIOMotorDatabase
 
@@ -57,7 +60,7 @@ class AIOMotorCollection(motor_asyncio.AsyncIOMotorCollection):
             self.database, self.name + "." + name, _delegate=self.delegate[name]
         )
 
-    async def find_one_or_404(self, *args, **kwargs) -> Dict:
+    async def find_one_or_404(self, *args: Any, **kwargs: Any) -> Dict:
         """
         Find a single document or raise a 404 with the browser.
 
@@ -73,8 +76,10 @@ class AIOMotorCollection(motor_asyncio.AsyncIOMotorCollection):
                     user=user)
 
         Parameters:
-            args: Arguments to be passed to `AsyncIOMotorCollection.Collection.find_one`.
-            kwargs: Extra arguments to be passed to `AsyncIOMotorCollection.Collection.find_one`.
+            args: Arguments to be passed to
+                `AsyncIOMotorCollection.Collection.find_one`.
+            kwargs: Extra arguments to be passed to
+                `AsyncIOMotorCollection.Collection.find_one`.
         """
         found = await self.find_one(*args, **kwargs)
         if found is None:
@@ -91,33 +96,49 @@ class AIOMotorDatabase(motor_asyncio.AsyncIOMotorDatabase):
     accessed with dot notation.
 
     Arguments:
-        client: An instance of the Motor client to use to connect to the database.
+        client: An instance of the Motor client to use to connect to the
+            database.
         name: The name of the database.
         kwargs: Extra arguments to be passed to the database.
     """
 
-    def __init__(self, client: AIOMotorClient, name: str, **kwargs) -> None:
+    def __init__(
+            self,
+            client: AIOMotorClient,
+            name: str,
+            **kwargs: Any
+    ) -> None:
         self._client = client
-        delegate = kwargs.get("_delegate") or Database(client.delegate, name, **kwargs)
+        delegate = kwargs.get("_delegate") or \
+            Database(client.delegate, name, **kwargs)
 
         super(AgnosticBaseProperties, self).__init__(delegate)
 
     def __getitem__(self, name: str) -> AIOMotorCollection:
         return AIOMotorCollection(self, name)
 
+
 class AIOEngine(_AIOEngine):
     """
-    Subclass of the :class`~Odmantic.AIOEngine` object, which is responsible for handling database
-    operations with MongoDB in an asynchronous way using `Motor`.
+    Subclass of the :class`~Odmantic.AIOEngine` object, which is responsible
+    for handling database operations with MongoDB in an asynchronous way using
+    `Motor`.
 
-    The purpose of this subclass is to add the function :func::`AIOEngine.find_one_or_404`.
+    The purpose of this subclass is to add the function
+    :func::`AIOEngine.find_one_or_404`.
     """
-    async def find_one_or_404(self, model: Model, *args, **kwargs) -> Model:
+    async def find_one_or_404(
+            self,
+            model: ModelType,
+            *args: tuple,
+            **kwargs: dict
+    ) -> Model:
         """
         Find a single document or raise a 404 with the browser.
 
-        This function is like :meth:`~odmantic.AIOEngine.find_one`, but rather than returning
-        ``None``. It will raise a 404 error (Not Found HTTP status) on the request.
+        This function is like :meth:`~odmantic.AIOEngine.find_one`, but rather
+        than returning ``None``. It will raise a 404 error (Not Found HTTP
+        status) on the request.
 
         .. code-block:: python
             @app.route("/user/<username>")
@@ -129,7 +150,8 @@ class AIOEngine(_AIOEngine):
         Parameters:
             model: The :class:`~Odmantic.Model` to use to find the model.
             args: Arguments to pass to :class:`~odmantic.AIOEngine.find_one`.
-            kwargs: Extra arguments to pass to :class:`~odmantic.AIOEngine.find_one`.
+            kwargs: Extra arguments to pass to
+            :class:`~odmantic.AIOEngine.find_one`.
 
         Raises:
             ``HTTPException``: Uses `quart.abort` to raises this exception if
@@ -143,13 +165,14 @@ class AIOEngine(_AIOEngine):
 
         return found
 
+
 class AIOMotorClient(motor_asyncio.AsyncIOMotorClient):
     """
     Subclass of :class:`~motor.motor_asyncio.AsyncIOMotorClient`.
 
     Returns instances of Quart-Mongo
     :class:`~quart_mongo.wrappers.AIOMotorDatabase` instead of native
-    :class:`~motor.motor_asyncio.AIOMotorDatabase`. 
+    :class:`~motor.motor_asyncio.AIOMotorDatabase`.
     :class:`~quart_mongo.wrappers.AIOEngine` instead of native
     :class:`~odmantinc.AIOEngine`.
     """

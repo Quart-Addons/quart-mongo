@@ -1,8 +1,5 @@
 """
 quart_mongo.config
-
-Provides helper classes and functions for configuring
-MongoDB with Quart-Mongo.
 """
 from typing import Any, Dict, Optional, Tuple
 
@@ -10,6 +7,7 @@ from pydantic import BaseModel
 from quart import Quart
 
 from .const import MONGO_URI_ERROR
+
 
 class MongoConfig(BaseModel):
     """
@@ -26,6 +24,7 @@ class MongoConfig(BaseModel):
     args: Optional[Tuple[Any]]
     kwargs: Optional[Dict[str, Any]]
 
+
 def get_uri(app: Quart, uri: Optional[str]) -> str:
     """
     Gets the MongoDB URI from the app configuration.
@@ -36,7 +35,7 @@ def get_uri(app: Quart, uri: Optional[str]) -> str:
 
     This function should not be called. It is called by
     `quart_mongo.Mongo` at creation time to get the MongoDB URI if one
-    was not provided dirctly to it.
+    was not provided directly to it.
 
     Arguments:
         app: The `quart.Quart` application.
