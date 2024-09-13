@@ -1,5 +1,5 @@
 """
-Tests `Motor` specific connections using the extension.
+tests.motor.test_connection
 """
 import pytest
 from quart import Quart
@@ -7,6 +7,7 @@ from quart_mongo import Mongo
 from quart_mongo.wrappers import AIOMotorDatabase
 
 from tests.utils import teardown
+
 
 @pytest.mark.asyncio
 async def test_motor_database_success(uri: str) -> None:
@@ -18,6 +19,7 @@ async def test_motor_database_success(uri: str) -> None:
     await app.startup()
     assert isinstance(mongo.db, AIOMotorDatabase)
     await teardown(mongo)
+
 
 @pytest.mark.asyncio
 async def test_multiple_motor_connections(client_uri: str) -> None:
@@ -33,15 +35,17 @@ async def test_multiple_motor_connections(client_uri: str) -> None:
     await teardown(db1)
     await teardown(db2)
 
+
 @pytest.mark.asyncio
 async def test_motor_no_database_name_in_uri(client_uri: str) -> None:
     """
     Test no database name in URI.
     """
     app = Quart(__name__)
-    mongo =  Mongo(app, client_uri)
+    mongo = Mongo(app, client_uri)
     await app.startup()
     assert mongo.db is None
+
 
 @pytest.mark.asyncio
 async def test_motor_custom_class(uri: str) -> None:
@@ -53,7 +57,7 @@ async def test_motor_custom_class(uri: str) -> None:
         Custom document class.
         """
     app = Quart(__name__)
-    mongo = Mongo(app, uri, document_class = CustomDict)
+    mongo = Mongo(app, uri, document_class=CustomDict)
     await app.startup()
     things = await mongo.db.things.find_one()
     assert things is None

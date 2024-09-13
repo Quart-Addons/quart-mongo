@@ -1,5 +1,5 @@
 """
-Tests General Extension Connections.
+tests.test_general_connection
 """
 import pytest
 
@@ -8,6 +8,7 @@ from quart import Quart
 from quart_mongo import Mongo
 
 from .utils import CouldNotConnect, wait_until_connected
+
 
 @pytest.mark.asyncio
 async def test_client_connection(client_uri: str) -> None:
@@ -18,6 +19,7 @@ async def test_client_connection(client_uri: str) -> None:
     mongo = Mongo(app, client_uri)
     assert isinstance(mongo, Mongo)
 
+
 def test_invalid_uri() -> None:
     """
     Test an invalid Mongo URI.
@@ -25,6 +27,7 @@ def test_invalid_uri() -> None:
     app = Quart(__name__)
     with pytest.raises(InvalidURI):
         Mongo(app, "http://localhost:27017/test")
+
 
 def test_database_failure() -> None:
     """
@@ -34,6 +37,7 @@ def test_database_failure() -> None:
     app = Quart(__name__)
     with pytest.raises(ValueError):
         Mongo(app)
+
 
 @pytest.mark.asyncio
 async def test_doesnt_connect_by_default(uri: str) -> None:

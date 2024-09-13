@@ -1,5 +1,5 @@
 """
-Tests JSON Provider for MongoDB.
+tests.test_json
 """
 import json
 import pytest
@@ -12,6 +12,7 @@ from quart_mongo.helpers import MongoJSONProvider
 
 from tests.utils import teardown
 
+
 @pytest.mark.asyncio
 async def test_provider_registered_with_app(client_uri: str) -> None:
     """
@@ -21,6 +22,7 @@ async def test_provider_registered_with_app(client_uri: str) -> None:
     app = Quart(__name__)
     Mongo(app, client_uri)
     assert isinstance(app.json, MongoJSONProvider)
+
 
 @pytest.mark.asyncio
 async def test_encodes_json(client_uri: str) -> None:
@@ -33,6 +35,7 @@ async def test_encodes_json(client_uri: str) -> None:
         resp = jsonify({"foo": "bar"})
         dumped = json.loads(ensure_str(await resp.get_data()))
         assert dumped == {"foo": "bar"}
+
 
 @pytest.mark.asyncio
 async def test_handles_mongo_types(uri: str) -> None:
@@ -51,11 +54,11 @@ async def test_handles_mongo_types(uri: str) -> None:
         return jsonify({"id": ObjectId(obj_id)})
 
     @app.route("/post", methods=["POST"])
-    async def post():
+    async def post() -> None:
         """
         Gets JSON from a request object.
         """
-        data = await request.json()
+        data = await request.json
         assert data == {"id": {"$oid": obj_id}}
 
     client = app.test_client()
@@ -63,8 +66,9 @@ async def test_handles_mongo_types(uri: str) -> None:
     data = await response.get_json()
     await client.post("/post", json=data)
 
+
 @pytest.mark.asyncio
-async def test_jsonifies_cursor(uri: str) -> None:
+async def test_json_cursor(uri: str) -> None:
     """
     Test JSON encoding for Mongo cursor.
     """
@@ -82,11 +86,11 @@ async def test_jsonifies_cursor(uri: str) -> None:
         return jsonify(curs)
 
     @app.route("/post", methods=["POST"])
-    async def post():
+    async def post() -> None:
         """
         Gets JSON from a request object.
         """
-        data = await request.json()
+        data = await request.json
         assert data == [{"foo": "bar"}, {"foo": "baz"}]
 
     await app.startup()

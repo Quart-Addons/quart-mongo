@@ -1,3 +1,3 @@
 """
-Test `Motor` Useage with the extension.
+tests.motor
 """

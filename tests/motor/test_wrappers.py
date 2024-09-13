@@ -1,6 +1,5 @@
 """
-Test the wrappers for `Motor` provided
-by the extension.
+tests.motor.test_wrapper
 """
 import pytest
 
@@ -9,6 +8,7 @@ from werkzeug.exceptions import NotFound
 from quart_mongo import Mongo
 
 from tests.utils import teardown
+
 
 @pytest.mark.asyncio
 async def test_motor_find_one_or_404_notfound(uri: str) -> None:
@@ -21,6 +21,7 @@ async def test_motor_find_one_or_404_notfound(uri: str) -> None:
     with pytest.raises(NotFound):
         await mongo.db.things.find_one_or_404({"id": "thing"})
     await teardown(mongo)
+
 
 @pytest.mark.asyncio
 async def test_motor_find_one_or_404_found(uri: str) -> None:
