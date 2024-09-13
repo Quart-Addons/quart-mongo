@@ -167,8 +167,8 @@ class AIOEngine(_AIOEngine):
         found = await self.find_one(
             model,
             *queries,
-            sort,
-            session
+            sort=sort,
+            session=session
             )
 
         if found is None:
