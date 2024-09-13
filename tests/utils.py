@@ -10,8 +10,8 @@ async def teardown(mongo: Mongo, database: str | None = None) -> None:
     Tears down the MongoDB once the test is completed.
     """
     if database is None:
-        if mongo.config.database is not None:
-            database = mongo.config.database
+        if mongo.database is not None:
+            database = mongo.database
         else:
             database = "test"
     await mongo.cx.drop_database(database)
