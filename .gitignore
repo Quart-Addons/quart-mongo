@@ -5,3 +5,5 @@ poetry.lock
 .pytest_cache
 
 
+dist/quart_mongo-0.1.2-py3-none-any.whl
+dist/quart_mongo-0.1.2.tar.gz
