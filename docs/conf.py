@@ -9,7 +9,7 @@
 project = 'Quart-Mongo'
 copyright = '2023, Chris Rood'
 author = 'Chris Rood'
-release = '0.1.2'
+release = '0.1.1'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

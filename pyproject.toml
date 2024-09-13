@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "quart-mongo"
-version = "0.1.2"
+version = "0.1.1"
 description = "Quart-Mongo bridges Quart, Motor, and Odmantic to create a powerful MongoDB extension for your Quart app."
 authors = ["Chris Rood <quart.addons@gmail.com>"]
 classifiers = [
