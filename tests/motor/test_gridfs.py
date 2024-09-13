@@ -141,12 +141,12 @@ async def test_sets_supports_conditional_gets(uri: str) -> None:
     fileobj = BytesIO(b"a" * 500 * 1024)
     await mongo.save_file("myfile.txt", fileobj)
 
+    method = "GET"
     headers = {
-        "method": "GET",
         "If-None-Match": md5(fileobj.getvalue()).hexdigest(),
     }
 
-    async with app.test_request_context("/", headers=headers):
+    async with app.test_request_context("/", method=method, headers=headers):
         resp = await mongo.send_file_by_name("myfile.txt")
         assert resp.status_code == 304
     await teardown(mongo)
