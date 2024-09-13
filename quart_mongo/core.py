@@ -6,7 +6,7 @@ The extension for Quart Mongo.
 from __future__ import annotations
 from inspect import isawaitable
 import mimetypes
-from typing import Any, AnyStr, Optional, Tuple, Unpack, TYPE_CHECKING
+from typing import Any, AnyStr, Optional, TYPE_CHECKING
 
 from bson import ObjectId
 from gridfs import NoFile
@@ -14,7 +14,7 @@ from motor.motor_asyncio import AsyncIOMotorGridFSBucket
 from pymongo import uri_parser
 from quart import Quart, abort, Response
 
-from .config import MongoConfig, get_uri
+from .const import MONGO_URI_ERROR
 from .helpers import BSONObjectIdConverter, MongoJSONProvider
 
 from .utils import (
@@ -49,22 +49,26 @@ class Mongo:
             app: Optional[Quart] = None,
             uri: Optional[str] = None,
             json_options: Optional[JSONOptions] = None,
-            *args: Unpack[Tuple[Any]],
-            **kwargs: Any
+            *args: tuple,
+            **kwargs: dict
     ) -> None:
-        self.uri = uri
         self.json_options = json_options
-        self.args = args
-        self.kwargs = kwargs
-        self.config: Optional[MongoConfig] = None
+        self.args: Optional[tuple] = None
+        self.kwargs: Optional[dict] = None
         self.cx: Optional[AIOMotorClient] = None
         self.db: Optional[AIOMotorDatabase] = None
         self.odm: Optional[AIOEngine] = None
 
         if app is not None:
-            self.init_app(app)
+            self.init_app(app, uri, *args, **kwargs)
 
-    def init_app(self, app: Quart) -> None:
+    def init_app(
+            self,
+            app: Quart,
+            uri: Optional[str] = None,
+            *args: tuple,
+            **kwargs: dict
+    ) -> None:
         """
         This function configures `Mongo` and applies the extension instance
         with the given application.
@@ -92,14 +96,21 @@ class Mongo:
         """
         app.config.setdefault("QUART_MONGO_JSON_OPTIONS", self.json_options)
 
-        uri = get_uri(app, self.uri)
-        self.args = tuple([uri] + list(self.args))
-        parsed_uri = uri_parser.parse_uri(self.uri)
-        self.database_name = parsed_uri["database"] or None
+        if uri is None:
+            uri = app.config.get("MONGO_URI", None)
+
+        if uri is not None:
+            self.args = tuple([uri] + list(args))
+        else:
+            raise ValueError(MONGO_URI_ERROR)
+
+        parsed_uri = uri_parser.parse_uri(uri)
+        self.database = parsed_uri["database"]
 
         # Try to delay connecting, in case the app is loaded
         # before forking per:
         # https://pymongo.readthedocs.io/en/stable/faq.html#is-pymongo-fork-safe
+        self.kwargs = kwargs
         self.kwargs['connect'] = False
 
         # Register before serving function with the app
@@ -128,9 +139,9 @@ class Mongo:
         """
         self.cx = AIOMotorClient(*self.args, **self.kwargs)
 
-        if self.config.database:
-            self.db = self.cx.motor(self.config.database)
-            self.odm = self.cx.odm(self.config.database)
+        if self.database:
+            self.db = self.cx.motor(self.database)
+            self.odm = self.cx.odm(self.database)
 
     async def send_file_by_name(
         self,
