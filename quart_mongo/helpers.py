@@ -7,7 +7,7 @@ from bson import json_util, SON
 from bson.errors import InvalidId
 from bson.json_util import DEFAULT_JSON_OPTIONS
 from bson.objectid import ObjectId
-from pydantic.json import pydantic_encoder
+from pydantic_core import to_jsonable_python
 from quart import abort, Quart
 from quart.json.provider import DefaultJSONProvider
 from six import iteritems, string_types
@@ -100,4 +100,4 @@ class MongoJSONProvider(DefaultJSONProvider):
             try:
                 return self.mongo_json(object_)
             except TypeError:
-                return pydantic_encoder(object_)
+                return to_jsonable_python(object_)
