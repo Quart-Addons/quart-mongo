@@ -44,30 +44,30 @@ class Mongo:
         args: Arguments to pass to `AIOMotorClient` on initialization.
         kwargs: Extra arguments to pass to `AIOMotorClient` on initialization.
     """
-    def __init__(
+    def __init__(  # pylint: disable=W1113
             self,
             app: Optional[Quart] = None,
             uri: Optional[str] = None,
             json_options: Optional[JSONOptions] = None,
-            *args: tuple,
-            **kwargs: dict
+            *args: Any,
+            **kwargs: Any
     ) -> None:
         self.json_options = json_options
         self.args: Optional[tuple] = None
         self.kwargs: Optional[dict] = None
-        self.cx: Optional[AIOMotorClient] = None
-        self.db: Optional[AIOMotorDatabase] = None
-        self.odm: Optional[AIOEngine] = None
+        self.cx: AIOMotorClient = None
+        self.db: AIOMotorDatabase = None
+        self.odm: AIOEngine = None
 
         if app is not None:
             self.init_app(app, uri, *args, **kwargs)
 
-    def init_app(
+    def init_app(  # pylint: disable=W1113
             self,
             app: Quart,
             uri: Optional[str] = None,
-            *args: tuple,
-            **kwargs: dict
+            *args: Any,
+            **kwargs: Any
     ) -> None:
         """
         This function configures `Mongo` and applies the extension instance
@@ -113,7 +113,6 @@ class Mongo:
         self.kwargs = kwargs
         self.kwargs['connect'] = False
 
-        # Register before serving function with the app
         app.before_serving(self._connect_db)
 
         # Register helpers with the app.
