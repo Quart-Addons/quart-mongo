@@ -21,7 +21,11 @@ classifiers = [
 ]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "quart_mongo"}]
+packages = [
+{include = "quart_mongo"},
+{include = "quart_mongo/py.typed"}
+]
+
 repository = "https://github.com/Quart-Addons/quart-mongo"
 homepage = "https://github.com/Quart-Addons/quart-mongo"
 
