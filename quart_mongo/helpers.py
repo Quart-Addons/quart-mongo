@@ -37,7 +37,7 @@ class BSONObjectIdConverter(BaseConverter):
     :class:`~quart_mongo.Mongo` instance at creation
     time.
     """
-    def to_python(self, value: str) -> ObjectId:
+    def to_python(self, value: Any) -> ObjectId:
         """
         Converts a string value to an `ObjectId`.
 
