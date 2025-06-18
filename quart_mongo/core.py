@@ -234,7 +234,7 @@ class Mongo:
             last_modified=file_obj.upload_date
         )
 
-    async def save_file(
+    def save_file(
         self,
         filename: str,
         fileobj: SupportsRead[AnyStr],
