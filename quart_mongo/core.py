@@ -4,25 +4,16 @@ quart_mongo.core
 The extension for Quart Mongo.
 """
 from __future__ import annotations
-from inspect import isawaitable
-import mimetypes
+from mimetypes import guess_type
 from typing import Any, AnyStr, Optional, TYPE_CHECKING
 
 from bson import ObjectId
-from gridfs import NoFile
-from motor.motor_asyncio import AsyncIOMotorGridFSBucket
+from gridfs import GridFS, NoFile
 from pymongo import uri_parser
-from quart import Quart, abort, Response
+from quart import Quart, abort, Response, send_file
 
 from .const import MONGO_URI_ERROR
 from .helpers import BSONObjectIdConverter, MongoJSONProvider
-
-from .utils import (
-    check_file_object,
-    check_gridfs_arguments,
-    create_response
-)
-
 from .wrappers import AIOMotorClient, AIOMotorDatabase, AIOEngine
 from .typing import JSONOptions
 
@@ -142,11 +133,11 @@ class Mongo:
             self.db = self.cx.motor(self.database)
             self.odm = self.cx.odm(self.database)
 
-    async def send_file_by_name(
+    async def send_file(
         self,
         filename: str,
         base: str = "fs",
-        revision: int = -1,
+        version: int = -1,
         cache_for: int = 31536000
     ) -> Response:
         """
@@ -164,33 +155,38 @@ class Mongo:
         Arguments:
             filename: The filename of the file to return
             base: The base name of the GridFS collections to use
-            revision: Which revisions of the file to retrieve.
+            version: Which version of the file to retrieve.
                 Defaults to -1 (most recent).
             int cache_for: Number of seconds that browsers should be
                 instructed to cache responses
         """
-        check_gridfs_arguments(
-            base=base, version=revision, cache_for=cache_for
-            )
+        if not isinstance(base, str):
+            raise TypeError("'base' must be a string")
+        if not isinstance(version, int):
+            raise TypeError("'version' must be an integer")
+        if not isinstance(cache_for, int):
+            raise TypeError("'cache_for' must be an integer")
 
-        storage = AsyncIOMotorGridFSBucket(self.db, bucket_name=base)
+        storage = GridFS(self.db, base)
 
         try:
-            grid_out = await storage.open_download_stream_by_name(
-                filename, revision=revision
-                )
+            fileobj = storage.get_version(filename=filename, version=version)
         except NoFile:
             abort(404)
 
-        return await create_response(
-            grid_out, filename=filename, cache_timeout=cache_for
+        return await send_file(
+            fileobj,
+            mimetype=fileobj.content_type,
+            attachment_filename=filename,
+            add_etags=True,
+            cache_timeout=cache_for,
+            last_modified=fileobj.upload_date
         )
 
     async def send_file_by_id(
             self,
-            id: ObjectId,  # pylint: disable=W0622
+            oid: ObjectId,  # pylint: disable=W0622
             base: str = "fs",
-            version: int = -1,
             cache_for: int = 31536000
             ) -> Response:
         """
@@ -206,7 +202,7 @@ class Mongo:
                 return await mongo.send_file_by_id(id)
 
         Arguments:
-            id: The bson Object id of the file.
+            oid: The bson Object id of the file.
             base: The base name of the GridFS collections to use
             version: If positive, return the Nth revision of the file
                 identified by filename; if negative, return the Nth most recent
@@ -215,16 +211,28 @@ class Mongo:
             int cache_for: Number of seconds that browsers should be
                 instructed to cache responses
         """
-        check_gridfs_arguments(base=base, version=version, cache_for=cache_for)
+        if not isinstance(oid, ObjectId):
+            raise TypeError("'oid' must be a `bson.ObjectId`")
+        if not isinstance(base, str):
+            raise TypeError("'base' must be a string")
+        if not isinstance(cache_for, int):
+            raise TypeError("'cache_for' must be an integer")
 
-        storage = AsyncIOMotorGridFSBucket(self.db, bucket_name=base)
+        storage = GridFS(self.db, base)
 
         try:
-            grid_out = await storage.open_download_stream(id)
+            file_obj = storage.get(oid)
         except NoFile:
             abort(404)
 
-        return await create_response(grid_out, cache_timeout=cache_for)
+        return await send_file(
+            file_obj,
+            mimetype=file_obj.content_type,
+            attachment_filename=file_obj.filename,
+            add_etags=True,
+            cache_timeout=cache_for,
+            last_modified=file_obj.upload_date
+        )
 
     async def save_file(
         self,
@@ -254,35 +262,20 @@ class Mongo:
             kwargs: extra attributes to be stored in the file's document,
             passed directly to :meth:`gridfs.GridFS.put`
         """
-        check_gridfs_arguments(
-            check_base=True,
-            base=base,
-            check_version=False,
-            check_cache_for=False
-        )
-
-        check_file_object(fileobj)
-
-        if kwargs:
-            metadata = kwargs.copy()
-        else:
-            metadata = {}
-
-        content_type = metadata.setdefault('contentType', content_type)
+        if not isinstance(base, str):
+            raise TypeError("'base' must be a string")
+        if not (hasattr(fileobj, "read") and callable(fileobj.read)):
+            raise TypeError("'fileobj' must have read() method")
 
         if content_type is None:
-            content_type = mimetypes.guess_type(filename)
-            metadata['contentType'] = content_type[0]
+            content_type, _ = guess_type(filename)
 
-        storage = AsyncIOMotorGridFSBucket(self.db, bucket_name=base)
+        storage = GridFS(self.db, base)
 
-        if isawaitable(fileobj.read()):
-            data = await fileobj.read()
-        else:
-            data = fileobj.read()
-
-        grid_in = storage.open_upload_stream(filename, metadata=metadata)
-
-        await grid_in.write(data)
-        await grid_in.close()
-        return grid_in._id  # pylint: disable=W0212
+        oid = storage.put(
+            fileobj,
+            filename=filename,
+            content_type=content_type,
+            **kwargs
+        )
+        return oid
