@@ -8,14 +8,17 @@ from mimetypes import guess_type
 from typing import Any, AnyStr, Optional, TYPE_CHECKING
 
 from bson import ObjectId
-from gridfs import GridFS, NoFile
+from gridfs import AsyncGridFS, NoFile
+from motor.motor_asyncio import AsyncIOMotorGridFSBucket
 from pymongo import uri_parser
-from quart import Quart, abort, Response, send_file
+from quart import Quart, abort, current_app, Response, send_file, make_response
 
 from .const import MONGO_URI_ERROR
 from .helpers import BSONObjectIdConverter, MongoJSONProvider
 from .wrappers import AIOMotorClient, AIOMotorDatabase, AIOEngine
 from .typing import JSONOptions
+from .utils import check_file_object, check_gridfs_arguments
+
 
 if TYPE_CHECKING:
     from _typeshed import SupportsRead
@@ -133,7 +136,7 @@ class Mongo:
             self.db = self.cx.motor(self.database)
             self.odm = self.cx.odm(self.database)
 
-    async def send_file(
+    async def send_file_by_name(
         self,
         filename: str,
         base: str = "fs",
@@ -160,28 +163,23 @@ class Mongo:
             int cache_for: Number of seconds that browsers should be
                 instructed to cache responses
         """
-        if not isinstance(base, str):
-            raise TypeError("'base' must be a string")
-        if not isinstance(version, int):
-            raise TypeError("'version' must be an integer")
-        if not isinstance(cache_for, int):
-            raise TypeError("'cache_for' must be an integer")
+        check_gridfs_arguments(
+            base=base, version=version, cache_for=cache_for
+        )
 
-        storage = GridFS(self.db, base)
+        storage = AsyncIOMotorGridFSBucket(self.db, bucket_name=base)
 
         try:
-            fileobj = storage.get_version(filename=filename, version=version)
+            grid_out = await storage.open_download_stream_by_name(
+                filename, revision=version
+            )
         except NoFile:
             abort(404)
 
-        return await send_file(
-            fileobj,
-            mimetype=fileobj.content_type,
-            attachment_filename=filename,
-            add_etags=True,
-            cache_timeout=cache_for,
-            last_modified=fileobj.upload_date
-        )
+        file = await grid_out.read()
+        mimetype = grid_out.metadata.get("mimetype", None)
+        response = await make_response(file)
+        return response
 
     async def send_file_by_id(
             self,
@@ -218,10 +216,10 @@ class Mongo:
         if not isinstance(cache_for, int):
             raise TypeError("'cache_for' must be an integer")
 
-        storage = GridFS(self.db, base)
+        storage = AsyncGridFS(self.db, base)  # type: ignore[arg-type]
 
         try:
-            file_obj = storage.get(oid)
+            file_obj = await storage.get(oid)
         except NoFile:
             abort(404)
 
@@ -234,12 +232,12 @@ class Mongo:
             last_modified=file_obj.upload_date
         )
 
-    def save_file(
+    async def save_file(
         self,
         filename: str,
         fileobj: SupportsRead[AnyStr],
         base: str = "fs",
-        content_type: Optional[str] = None,
+        mimetype: Optional[str] = None,
         **kwargs: Any
     ) -> ObjectId:
         """
@@ -255,27 +253,36 @@ class Mongo:
         Arguments:
             filename: the filename of the file to return
             file fileobj: the file-like object to save
-            base: base the base name of the GridFS collections to use
-            content_type: the MIME content-type of the file. If
+            base: bucket name of the GridFS collections to use
+            mimetype: the mimetype of the file. If
                 ``None``, the content-type is guessed from the filename using
                 :func:`~mimetypes.guess_type`
             kwargs: extra attributes to be stored in the file's document,
             passed directly to :meth:`gridfs.GridFS.put`
         """
-        if not isinstance(base, str):
-            raise TypeError("'base' must be a string")
-        if not (hasattr(fileobj, "read") and callable(fileobj.read)):
-            raise TypeError("'fileobj' must have read() method")
+        check_gridfs_arguments(
+            check_base=True,
+            base=base,
+            check_version=False,
+            check_cache_for=False
+        )
 
-        if content_type is None:
-            content_type, _ = guess_type(filename)
+        check_file_object(fileobj)
 
-        storage = GridFS(self.db, base)
+        if kwargs:
+            metadata = kwargs.copy()
+        else:
+            metadata = dict()
 
-        oid = storage.put(
+        if mimetype is None:
+            mimetype, _ = guess_type(filename)
+            metadata['mimetype'] = mimetype
+
+        storage = AsyncIOMotorGridFSBucket(self.db, bucket_name=base)
+
+        oid = await storage.upload_from_stream(
+            filename,
             fileobj,
-            filename=filename,
-            content_type=content_type,
-            **kwargs
+            metadata=metadata
         )
         return oid
