@@ -30,6 +30,6 @@
 		}
 	},
 
-	"postCreateCommand": "poetry install --no-interaction --no-ansi",
+	"postCreateCommand": "poetry install --all-extras --no-interaction --no-ansi",
 	"remoteUser": "root"
 }
