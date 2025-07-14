@@ -1,103 +1,150 @@
 """
 quart_mongo.helpers
 """
-from typing import Any, Optional
+from datetime import datetime, timedelta, timezone
+import hashlib
+from io import BytesIO
+from mimetypes import guess_type
+import warnings
+from typing import BinaryIO
 
-from bson import json_util, SON
-from bson.errors import InvalidId
-from bson.json_util import DEFAULT_JSON_OPTIONS
-from bson.objectid import ObjectId
-from pydantic_core import to_jsonable_python
-from quart import abort, Quart
-from quart.json.provider import DefaultJSONProvider
-from six import iteritems, string_types
-from werkzeug.routing import BaseConverter
-
-from .typing import JSONOptions
+from gridfs.asynchronous import AsyncGridOut
+from motor.motor_asyncio import AsyncIOMotorGridOut
+from quart import current_app, request, Response
+from quart.helpers import DEFAULT_MIMETYPE
+from quart.wrappers.response import ResponseBody
 
 
-class BSONObjectIdConverter(BaseConverter):
+class GridFsFileWrapper:
     """
-    A simple converter for the RESTful URL routing system of Quart.
+    GridFS File Wrapper to include sha1 for etag.
 
-    .. code-block:: python
-        @app.route("/<ObjectId:task_id>")
-        async def show_task(task_id):
-            task = await mongo.db.tasks.find_one_or_404(task_id)
-            return await render_template("task.html", task=task)
+    This is used since GridFS doesn't manage its own checksum.
 
-    Valid object ID strings are converted into :class:`bson.objectid.ObjectId`
-    objects; invalid strings result in a 404 error.
-
-    The converter is automatically registered by the initialization of
-    :class:`~quart_mongo.Mongo` with keyword :attr:`ObjectId`.
-
-    The :class:`~quart_mongo.helpers.BSONObjectIdConverter`
-    is automatically installed on the
-    :class:`~quart_mongo.Mongo` instance at creation
-    time.
+    Arguments:
+        file: The file to use.
     """
-    def to_python(self, value: Any) -> ObjectId:
+    def __init__(self, file: BinaryIO) -> None:
+        self.file = file
+        self.hash = hashlib.sha1()
+
+    def read(self, n: int) -> bytes:
         """
-        Converts a string value to an `ObjectId`.
+        Reads the file and updates the hash.
 
-        Parameters:
-            value: The value to convert.
-
-        Raises:
-            `HTTPException`: Uses `quart.abort` to raise this exception
-            if an ``InvaildId`` is raised by `ObjectId` with a 404 error code.
+        Arguments:
+            n: The number of bytes to read.
         """
-        try:
-            return ObjectId(value)
-        except InvalidId:
-            abort(404)
-
-    def to_url(self, value: Any) -> str:
-        """
-        Converts a value to a URL string.
-        """
-        return str(value)
+        data = self.file.read(n)
+        if data:
+            self.hash.update(data)
+        return data
 
 
-class MongoJSONProvider(DefaultJSONProvider):
+async def generate_etag(grid_out: AsyncGridOut | AsyncIOMotorGridOut) -> str:
     """
-    A subclass of `quart.json.provider.DefaultJSONProvider`
-    that can handle MongoDB type objects and Odmantic
-    Model classes. It can also handle Pydantic type
-    models as well, which is for `quart_schema`.
+    Generates etag for GridFS.
+
+    GridFS does not manage its own checksum. Try to use a
+    sha1 sum that we have added during saving the file. This
+    function will fallback to a legacy md5 sum if it exists.
+    Otherwise, compute the sha1 sum directly.
+
+    Arguments:
+        grid_out: An instance of `~gridfs.asynchronous.AsyncGridOut`
     """
-    def __init__(self, app: Quart) -> None:
-        json_options: Optional[JSONOptions] = \
-            app.config.get("QUART_MONGO_JSON_OPTIONS", None)
-
-        if json_options is None:
-            json_options = DEFAULT_JSON_OPTIONS
-        self._default_kwargs = {"json_options": json_options}
-
-        super().__init__(app)
-
-    def mongo_json(self, object_: Any) -> Any:
-        """
-        Handles JSON serialization for MongoDB.
-        """
-        if hasattr(object_, "iteritems") or hasattr(object_, "items"):
-            return SON((k, self.default(v)) for k, v in iteritems(object_))
-        elif hasattr(object_, "__iter__") and \
-                not isinstance(object_, string_types):
-            return [self.default(v) for v in object_]
+    if isinstance(grid_out, AsyncIOMotorGridOut):
+        if grid_out.metadata is not None:
+            etag = grid_out.metadata.get("sha1")
         else:
-            return json_util.default(object_, **self._default_kwargs)
+            etag = None
 
-    def default(self, object_: Any) -> Any:
-        """
-        Serialize MongoDB objects and pydantic types as well as the
-        defaults.
-        """
+        if etag is not None:
+            return etag
+        else:
+            pos = grid_out.tell()
+            raw = await grid_out.read()
+            grid_out.seek(pos)
+            return hashlib.sha1(raw).hexdigest()
+    else:
         try:
-            return super().default(object_)
-        except TypeError:
-            try:
-                return self.mongo_json(object_)
-            except TypeError:
-                return to_jsonable_python(object_)
+            return grid_out.sha1
+        except AttributeError:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                etag = grid_out.md5
+            if etag is None:
+                pos = grid_out.tell()
+                raw = await grid_out.read()
+                await grid_out.seek(pos)
+                return hashlib.sha1(raw).hexdigest()
+            return etag
+
+
+async def send_gridfs(
+        file: BytesIO,
+        content_length: int,
+        mimetype: str | None = None,
+        as_attachment: bool = False,
+        attachment_filename: str | None = None,
+        add_etags: bool = True,
+        etag: str | None = None,
+        cache_timeout: int | None = None,
+        last_modified: datetime | None = None
+) -> Response:
+    """
+    Return a Response to send a GridFS file.
+
+    This is a copy of `~quart.helpers.send_file` with
+    changes for GridFS.
+
+    Arguments:
+        file: The bytes to send from GridFS.
+        content_length: The file content length from GridFS.
+        mimetype: Mimetype to use, by default it will be guessed or
+            revert to the DEFAULT_MIMETYPE.
+        as_attachment: If true use the attachment filename in a
+            Content-Disposition attachment header.
+        attachment_filename: Name for the filename, if it differs
+        add_etags: Set etags based on the filename, size and
+            modification time.
+        etag: The etag to add to the response.
+        last_modified: Used to override the last modified value.
+        cache_timeout: Time in seconds for the response to be cached.
+    """
+    file_body: ResponseBody
+    file_body = current_app.response_class.io_body_class(file)
+
+    if mimetype is None and attachment_filename is not None:
+        mimetype = guess_type(attachment_filename)[0] or DEFAULT_MIMETYPE
+
+    if mimetype is None:
+        raise ValueError(
+            "The mime type cannot be inferred, please set it manually via the"
+            " mimetype argument."
+        )
+
+    response = current_app.response_class(file_body, mimetype=mimetype)
+    response.content_length = content_length
+
+    if as_attachment:
+        response.headers.add(
+            "Content-Disposition", "attachment", filename=attachment_filename
+        )
+
+    if last_modified is not None:
+        response.last_modified = last_modified
+
+    response.cache_control.public = True
+    if cache_timeout is not None:
+        response.cache_control.max_age = cache_timeout
+        response.expires = \
+            datetime.now(timezone.utc) + timedelta(seconds=cache_timeout)
+
+    if add_etags and etag is not None:
+        response.set_etag(etag)
+
+    await response.make_conditional(
+        request, accept_ranges=True, complete_length=file.getbuffer().nbytes
+    )
+    return response
