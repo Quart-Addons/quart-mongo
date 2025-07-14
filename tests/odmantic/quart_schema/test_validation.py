@@ -1,5 +1,5 @@
 """
-Tests validation with quart_schema.
+tests.odmantic.quart_schema.test_validation
 """
 from typing import Any
 
@@ -10,19 +10,22 @@ from quart.views import View
 
 from quart_schema import (
     DataSource,
-    QuartSchema,
     ResponseReturnValue,
     SchemaValidationError,
     validate_request,
     validate_response
 )
 
-from quart_mongo import Mongo
-
 from tests.odmantic.models import Things
 
 
+# pylint: disable=W0613
+
+
 class Invalid(Model):
+    """
+    Invalid Model
+    """
     name: str
 
 
@@ -40,14 +43,10 @@ INVALID = Invalid(name="bob")
     ],
 )
 @pytest.mark.asyncio
-async def test_request_validation(uri: str, json: dict, status: int) -> None:
+async def test_request_validation(app: Quart, json: dict, status: int) -> None:
     """
     Tests request validation.
     """
-    app = Quart(__name__)
-    QuartSchema(app)
-    Mongo(app, uri)
-
     @app.route("/", methods=["POST"])
     @validate_request(Things)
     async def index(data: Things) -> ResponseReturnValue:
@@ -67,16 +66,12 @@ async def test_request_validation(uri: str, json: dict, status: int) -> None:
 )
 @pytest.mark.asyncio
 async def test_request_form_validation(
-    uri: str, data: dict, status: int
+    app: Quart, data: dict, status: int
 ) -> None:
     """
     Tests request form validation.
     """
-    app = Quart(__name__)
-    QuartSchema(app)
-    Mongo(app, uri)
-
-    @app.route("/", methods=["POST"])
+    @app.post("/")
     @validate_request(Things, source=DataSource.FORM)
     async def index(data: Things) -> ResponseReturnValue:
         return ""
@@ -97,16 +92,12 @@ async def test_request_form_validation(
 )
 @pytest.mark.asyncio
 async def test_response_validation(
-    uri: str, return_value: Any, status: int
+    app: Quart, return_value: Any, status: int
 ) -> None:
     """
     Tests response validation.
     """
-    app = Quart(__name__)
-    QuartSchema(app)
-    Mongo(app, uri)
-
-    @app.route("/")
+    @app.get("/")
     @validate_response(Things)
     async def index() -> ResponseReturnValue:
         return return_value
@@ -125,21 +116,23 @@ async def test_response_validation(
 )
 @pytest.mark.asyncio
 async def test_view_response_validation(
-    uri: str, return_value: Any, status: int
+    app: Quart, return_value: Any, status: int
 ) -> None:
     """
     Tests view response validation.
     """
     class ValidatedView(View):
+        """
+        Test validated view
+        """
         decorators = [validate_response(Things)]
         methods = ["GET"]
 
-        def dispatch_request(self, **kwargs: Any) -> ResponseReturnValue:
+        async def dispatch_request(self, **kwargs: Any) -> ResponseReturnValue:
+            """
+            dispatch request
+            """
             return return_value
-
-    app = Quart(__name__)
-    QuartSchema(app)
-    Mongo(app, uri)
 
     app.add_url_rule("/", view_func=ValidatedView.as_view("view"))
 
@@ -149,14 +142,10 @@ async def test_view_response_validation(
 
 
 @pytest.mark.asyncio
-async def test_websocket_validation(uri: str) -> None:
+async def test_websocket_validation(app: Quart) -> None:
     """
     Test websocket validation.
     """
-    app = Quart(__name__)
-    QuartSchema(app)
-    Mongo(app, uri)
-
     @app.websocket("/ws")
     async def ws() -> None:
         await websocket.receive_as(Things)
@@ -167,6 +156,7 @@ async def test_websocket_validation(uri: str) -> None:
             await websocket.send_as(VALID_DICT, Invalid)
 
     client = app.test_client()
+
     async with client.websocket("/ws") as test_websocket:
         await test_websocket.send_json(VALID_DICT)
         await test_websocket.send_json(INVALID_DICT)

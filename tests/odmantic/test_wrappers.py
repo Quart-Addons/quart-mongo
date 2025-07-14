@@ -1,42 +1,46 @@
 """
-tests.odmantic.test_wrapper
+tests.odmantic.test_wrappers
 """
 import pytest
 
 from quart import Quart
 from werkzeug.exceptions import NotFound
-from quart_mongo import Mongo
-
-from tests.utils import teardown
+from quart_mongo.odmantic import Odmantic
 
 from .models import Things
 
 
 @pytest.mark.asyncio
-async def test_odmantic_find_one_or_404_notfound(uri: str) -> None:
+async def test_odmantic_find_one_or_404_notfound(
+    db_name: str, uri: str
+) -> None:
     """
-    Test not found for `Odmantic.db.find_one_or_404`.
+    Test not found for `Odmantic.engine.find_one_or_404`.
     """
     app = Quart(__name__)
-    mongo = Mongo(app, uri)
+    mongo = Odmantic(app, uri)
     await app.startup()
+    assert mongo.cx is not None
+    assert mongo.engine is not None
     with pytest.raises(NotFound):
-        await mongo.odm.find_one_or_404(Things, Things.id == 'thing')
-    await teardown(mongo)
+        await mongo.engine.find_one_or_404(Things, Things.id == 'thing')
+    await mongo.cx.drop_database(db_name)
 
 
 @pytest.mark.asyncio
-async def test_odmantic_find_one_or_404_found(uri: str) -> None:
+async def test_odmantic_find_one_or_404_found(db_name: str, uri: str) -> None:
     """
-    Test found for `Odmantic.db.find_one_or_404``.
+    Test found for `Odmantic.engine.find_one_or_404``.
     """
     app = Quart(__name__)
-    mongo = Mongo(app, uri)
+    mongo = Odmantic(app, uri)
     await app.startup()
+    assert mongo.cx is not None
+    assert mongo.engine is not None
     thing = Things(id="thing", val="foo")
-    await mongo.odm.save(thing)
-    thing: Things = await mongo.odm.find_one_or_404(
+    await mongo.engine.save(thing)
+    thing = await mongo.engine.find_one_or_404(
         Things, Things.id == 'thing'
         )
     assert thing.val == "foo"
-    await teardown(mongo)
+    await mongo.cx.drop_database(db_name)
