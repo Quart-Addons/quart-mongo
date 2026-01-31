@@ -1,5 +1,8 @@
 # Quart Mongo
 
+> [!WARNING]
+> This package is no longer being maintained or developed.
+
 ![Quart Mongo Logo](logos/logo.png)
 
 Quart-Mongo bridges [Quart][], [Motor][], and [Odmantic][] to create a powerful MongoDB extension to use in your Quart applications. It also provides some convenience helpers as well as being able to work with [Quart-Schema][].
